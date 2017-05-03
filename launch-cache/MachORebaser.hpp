@@ -1,16 +1,16 @@
-/* -*- mode: C++; c-basic-offset: 4; tab-width: 4 -*- 
+/* -*- mode: C++; c-basic-offset: 4; tab-width: 4 -*-
  *
  * Copyright (c) 2006 Apple Computer, Inc. All rights reserved.
  *
  * @APPLE_LICENSE_HEADER_START@
- * 
+ *
  * This file contains Original Code and/or Modifications of Original Code
  * as defined in and that are subject to the Apple Public Source License
  * Version 2.0 (the 'License'). You may not use this file except in
  * compliance with the License. Please obtain a copy of the License at
  * http://www.opensource.apple.com/apsl/ and read it before using this
  * file.
- * 
+ *
  * The Original Code and all software distributed under the License are
  * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
  * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
@@ -18,7 +18,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
  * Please see the License for the specific language governing rights and
  * limitations under the License.
- * 
+ *
  * @APPLE_LICENSE_HEADER_END@
  */
 
@@ -39,7 +39,7 @@
 #include <mach-o/fat.h>
 #include <mach-o/reloc.h>
 #include <mach-o/x86_64/reloc.h>
-#include <mach-o/arm/reloc.h>
+//#include <mach-o/arm/reloc.h>
 #include <vector>
 #include <set>
 
@@ -48,7 +48,37 @@
 #include "MachOLayout.hpp"
 #include "MachOTrie.hpp"
 
+// OSX SDK doesn't have these
+enum reloc_type_arm
+{
+    ARM_RELOC_VANILLA,	/* generic relocation as discribed above */
+    ARM_RELOC_PAIR,	/* the second relocation entry of a pair */
+    ARM_RELOC_SECTDIFF,	/* a PAIR follows with subtract symbol value */
+    ARM_RELOC_LOCAL_SECTDIFF, /* like ARM_RELOC_SECTDIFF, but the symbol
+				 referenced was local.  */
+    ARM_RELOC_PB_LA_PTR,/* prebound lazy pointer */
+    ARM_RELOC_BR24,	/* 24 bit branch displacement (to a word address) */
+    ARM_THUMB_RELOC_BR22, /* 22 bit branch displacement (to a half-word
+			     address) */
+    ARM_THUMB_32BIT_BRANCH, /* obsolete - a thumb 32-bit branch instruction
+			     possibly needing page-spanning branch workaround */
 
+    /*
+     * For these two r_type relocations they always have a pair following them
+     * and the r_length bits are used differently.  The encoding of the
+     * r_length is as follows:
+     * low bit of r_length:
+     *  0 - :lower16: for movw instructions
+     *  1 - :upper16: for movt instructions
+     * high bit of r_length:
+     *  0 - arm instructions
+     *  1 - thumb instructions
+     * the other half of the relocated expression is in the following pair
+     * relocation entry in the the low 16 bits of r_address field.
+     */
+    ARM_RELOC_HALF,
+    ARM_RELOC_HALF_SECTDIFF
+};
 
 class AbstractRebaser
 {
@@ -76,7 +106,7 @@ protected:
 	typedef typename A::P					P;
 	typedef typename A::P::E				E;
 	typedef typename A::P::uint_t			pint_t;
-		
+
 	pint_t*										mappedAddressForNewAddress(pint_t vmaddress);
 	pint_t										getSlideForNewAddress(pint_t newAddress);
 
@@ -99,8 +129,8 @@ private:
 	void										doLocalRelocation(const macho_relocation_info<P>* reloc);
 	bool										unequalSlides() const;
 
-protected:	
-	const macho_header<P>*						fHeader; 
+protected:
+	const macho_header<P>*						fHeader;
 	uint8_t*									fLinkEditBase;				// add file offset to this to get linkedit content
 	const MachOLayoutAbstraction&				fLayout;
 private:
@@ -116,7 +146,7 @@ private:
 
 template <typename A>
 Rebaser<A>::Rebaser(const MachOLayoutAbstraction& layout)
- : 	fLayout(layout), fLinkEditBase(0), fSymbolTable(NULL), fDynamicSymbolTable(NULL), 
+ : 	fLayout(layout), fLinkEditBase(0), fSymbolTable(NULL), fDynamicSymbolTable(NULL),
     fDyldInfo(NULL), fSplitSegInfo(NULL), fSplittingSegments(false), fHasSplitSegInfoV2(false)
 {
 	fHeader = (const macho_header<P>*)fLayout.getSegments()[0].mappedAddress();
@@ -127,7 +157,7 @@ Rebaser<A>::Rebaser(const MachOLayoutAbstraction& layout)
 		default:
 			throw "file is not a dylib or bundle";
 	}
-	
+
 	const std::vector<MachOLayoutAbstraction::Segment>& segments = fLayout.getSegments();
 	for(std::vector<MachOLayoutAbstraction::Segment>::const_iterator it = segments.begin(); it != segments.end(); ++it) {
 		const MachOLayoutAbstraction::Segment& seg = *it;
@@ -136,9 +166,9 @@ Rebaser<A>::Rebaser(const MachOLayoutAbstraction& layout)
 			break;
 		}
 	}
-	if ( fLinkEditBase == NULL )	
+	if ( fLinkEditBase == NULL )
 		throw "no __LINKEDIT segment";
-		
+
 	// get symbol table info
 	const macho_load_command<P>* const cmds = (macho_load_command<P>*)((uint8_t*)fHeader + sizeof(macho_header<P>));
 	const uint32_t cmd_count = fHeader->ncmds();
@@ -169,11 +199,11 @@ Rebaser<A>::Rebaser(const MachOLayoutAbstraction& layout)
 			}
 		}
 		cmd = (const macho_load_command<P>*)(((uint8_t*)cmd)+cmd->cmdsize());
-	}	
+	}
 
 	if ( fDyldInfo == NULL )
 		throw "no LC_DYLD_INFO load command";
-	
+
 	fSplittingSegments = layout.hasSplitSegInfo() && this->unequalSlides();
 
 	if ( fSplitSegInfo != NULL ) {
@@ -239,7 +269,7 @@ bool Rebaser<A>::rebase(std::vector<void*>& pointersInData)
 	// update load commands
 	this->adjustLoadCommands();
 
-	// update symbol table  
+	// update symbol table
 	this->adjustSymbolTable();
 
 	// update export info
@@ -266,7 +296,7 @@ void Rebaser<A>::adjustLoadCommands()
 			case LC_REEXPORT_DYLIB:
 			case LC_LOAD_UPWARD_DYLIB:
 				if ( (fHeader->flags() & MH_PREBOUND) != 0 ) {
-					// clear expected timestamps so that this image will load with invalid prebinding 
+					// clear expected timestamps so that this image will load with invalid prebinding
 					macho_dylib_command<P>* dylib  = (macho_dylib_command<P>*)cmd;
 					dylib->set_timestamp(2);
 				}
@@ -402,15 +432,15 @@ bool Rebaser<A>::adjustExportInfo()
 	catch (const char* msg) {
 		throwf("%s in %s", msg, fLayout.getFilePath());
 	}
-	
+
 	std::vector<mach_o::trie::Entry> newExports;
 	newExports.reserve(originalExports.size());
 	pint_t baseAddress = this->getBaseAddress();
 	pint_t baseAddressSlide = this->getSlideForVMAddress(baseAddress);
 	for (std::vector<mach_o::trie::Entry>::iterator it=originalExports.begin(); it != originalExports.end(); ++it) {
 		// remove symbols used by the static linker only
-		if (	   (strncmp(it->name, "$ld$", 4) == 0) 
-				|| (strncmp(it->name, ".objc_class_name",16) == 0) 
+		if (	   (strncmp(it->name, "$ld$", 4) == 0)
+				|| (strncmp(it->name, ".objc_class_name",16) == 0)
 				|| (strncmp(it->name, ".objc_category_name",19) == 0) ) {
 			//fprintf(stderr, "ignoring symbol %s\n", it->name);
 			continue;
@@ -421,7 +451,7 @@ bool Rebaser<A>::adjustExportInfo()
 		//fprintf(stderr, "orig=0x%08X, new=0x%08llX, sym=%s\n", oldOffset, it->address, it->name);
 		newExports.push_back(*it);
 	}
-	
+
 	// rebuild export trie
 	std::vector<uint8_t> newExportTrieBytes;
 	newExportTrieBytes.reserve(fDyldInfo->export_size());
@@ -429,7 +459,7 @@ bool Rebaser<A>::adjustExportInfo()
 	// align
 	while ( (newExportTrieBytes.size() % sizeof(pint_t)) != 0 )
 		newExportTrieBytes.push_back(0);
-	
+
 	uint32_t newExportsSize = newExportTrieBytes.size();
 	if ( newExportsSize <= fDyldInfo->export_size() ) {
 		// override existing trie in place
@@ -455,7 +485,7 @@ bool Rebaser<A>::adjustExportInfo()
 template <typename A>
 void Rebaser<A>::doCodeUpdate(uint8_t kind, uint64_t address, int64_t codeToDataDelta, int64_t codeToImportDelta)
 {
-	//fprintf(stderr, "doCodeUpdate(kind=%d, address=0x%0llX, dataDelta=0x%08llX, importDelta=0x%08llX, path=%s)\n", 
+	//fprintf(stderr, "doCodeUpdate(kind=%d, address=0x%0llX, dataDelta=0x%08llX, importDelta=0x%08llX, path=%s)\n",
 	//				kind, address, codeToDataDelta, codeToImportDelta, fLayout.getFilePath());
 	uint32_t* p;
 	uint32_t instruction;
@@ -479,7 +509,7 @@ void Rebaser<A>::doCodeUpdate(uint8_t kind, uint64_t address, int64_t codeToData
 			value = A::P::E::get32(*p);
 			value += codeToImportDelta;
 			 A::P::E::set32(*p, value);
-			break;			
+			break;
         case 5: // used by thumb2 movw
 			p = (uint32_t*)mappedAddressForVMAddress(address);
 			instruction = A::P::E::get32(*p);
@@ -530,7 +560,7 @@ void Rebaser<A>::doCodeUpdate(uint8_t kind, uint64_t address, int64_t codeToData
 				uint32_t i_		= (newTargetValue & 0x08000000) >> 27;
 				uint32_t imm3_	= (newTargetValue & 0x07000000) >> 24;
 				uint32_t imm8_	= (newTargetValue & 0x00FF0000) >> 16;
-				// update instruction to match codeToDataDelta 
+				// update instruction to match codeToDataDelta
 				uint32_t newInstruction = (instruction & 0x8F00FBF0) | imm4_ | (i_ << 10) | (imm3_ << 28) | (imm8_ << 16);
 				A::P::E::set32(*p, newInstruction);
 			}
@@ -565,7 +595,7 @@ void Rebaser<A>::doCodeUpdate(uint8_t kind, uint64_t address, int64_t codeToData
 				// construct new bits slices
 				uint32_t imm4_  = (newTargetValue & 0xF0000000) >> 28;
 				uint32_t imm12_ = (newTargetValue & 0x0FFF0000) >> 16;
-				// update instruction to match codeToDataDelta 
+				// update instruction to match codeToDataDelta
 				uint32_t newInstruction = (instruction & 0xFFF0F000) | (imm4_ << 16) | imm12_;
 				A::P::E::set32(*p, newInstruction);
 			}
@@ -663,16 +693,16 @@ void Rebaser<A>::doRebase(int segIndex, uint64_t segOffset, uint8_t type, std::v
 				P::setP(*mappedAddrP, valueP + this->getSlideForVMAddress(valueP));
 			}
 			catch (const char* msg) {
-				throwf("at offset=0x%08llX in seg=%s, pointer cannot be rebased because it does not point to __TEXT or __DATA. %s\n", 
+				throwf("at offset=0x%08llX in seg=%s, pointer cannot be rebased because it does not point to __TEXT or __DATA. %s\n",
 						segOffset, seg.name(), msg);
 			}
 			break;
-		
+
 		case REBASE_TYPE_TEXT_ABSOLUTE32:
 			value32 = E::get32(*mappedAddr32);
 			E::set32(*mappedAddr32, value32 + this->getSlideForVMAddress(value32));
 			break;
-			
+
 		case REBASE_TYPE_TEXT_PCREL32:
 			svalue32 = E::get32(*mappedAddr32);
 			valueP = seg.address() + segOffset + 4 + svalue32;
@@ -680,7 +710,7 @@ void Rebaser<A>::doRebase(int segIndex, uint64_t segOffset, uint8_t type, std::v
 			svalue32new = seg.address() + segOffset + 4 - valuePnew;
 			E::set32(*mappedAddr32, svalue32new);
 			break;
-		
+
 		default:
 			throw "bad rebase type";
 	}
@@ -693,7 +723,7 @@ void Rebaser<A>::applyRebaseInfo(std::vector<void*>& pointersInData)
 {
 	const uint8_t* p = &fLinkEditBase[fDyldInfo->rebase_off()];
 	const uint8_t* end = &p[fDyldInfo->rebase_size()];
-	
+
 	uint8_t type = 0;
 	int segIndex;
 	uint64_t segOffset = 0;
@@ -749,7 +779,7 @@ void Rebaser<A>::applyRebaseInfo(std::vector<void*>& pointersInData)
 			default:
 				throwf("bad rebase opcode %d", *p);
 		}
-	}	
+	}
 }
 
 template <>

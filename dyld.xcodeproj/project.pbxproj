@@ -702,7 +702,7 @@
 		F9ED4C8B0630A72300DF4E74 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0440;
+				LastUpgradeCheck = 0730;
 			};
 			buildConfigurationList = F9D8C7E9087B087300E93EFB /* Build configuration list for PBXProject "dyld" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -987,7 +987,6 @@
 		F93937350A94FB2900070A07 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 				CLANG_CXX_LIBRARY = "libc++";
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
@@ -1011,7 +1010,7 @@
 				);
 				OTHER_LDFLAGS = "-stdlib=libc++";
 				PRODUCT_NAME = update_dyld_shared_cache;
-				SDKROOT = macosx.internal;
+				SDKROOT = macosx;
 				VALID_ARCHS = "x86_64 i386";
 			};
 			name = Debug;
@@ -1020,7 +1019,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F971DD161A4A0E0700BBDD52 /* update_dyld_shared_cache.xcconfig */;
 			buildSettings = {
-				ARCHS = x86_64;
 				CLANG_CXX_LIBRARY = "libc++";
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = "$(RC_ProjectSourceVersion)";
@@ -1038,7 +1036,7 @@
 				);
 				OTHER_LDFLAGS = "-stdlib=libc++";
 				PRODUCT_NAME = update_dyld_shared_cache;
-				SDKROOT = macosx.internal;
+				SDKROOT = macosx;
 				STRIP_INSTALLED_PRODUCT = YES;
 				STRIP_STYLE = debugging;
 				VALID_ARCHS = "x86_64 i386";
@@ -1078,6 +1076,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DYLIB_COMPATIBILITY_VERSION = "";
 				DYLIB_CURRENT_VERSION = "";
@@ -1103,6 +1102,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DYLIB_COMPATIBILITY_VERSION = "";
@@ -1129,7 +1129,6 @@
 			baseConfigurationReference = F971DD141A4A0E0700BBDD52 /* dyld.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				CLANG_CXX_LIBRARY = "libc++";
 				CURRENT_PROJECT_VERSION = "$(RC_ProjectSourceVersion)";
 				DEAD_CODE_STRIPPING = YES;
@@ -1229,7 +1228,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F971DD151A4A0E0700BBDD52 /* libdyld.xcconfig */;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
 				DEAD_CODE_STRIPPING = YES;
 				EXECUTABLE_PREFIX = lib;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
@@ -1261,6 +1260,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F971DD151A4A0E0700BBDD52 /* libdyld.xcconfig */;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = "$(RC_ProjectSourceVersion)";
 				DEAD_CODE_STRIPPING = YES;
@@ -1333,6 +1333,8 @@
 			baseConfigurationReference = F971DD131A4A0E0700BBDD52 /* base.xcconfig */;
 			buildSettings = {
 				CLANG_CXX_LIBRARY = "compiler-default";
+				ENABLE_TESTABILITY = YES;
+				ONLY_ACTIVE_ARCH = YES;
 			};
 			name = Debug;
 		};
@@ -1348,6 +1350,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
@@ -1366,6 +1369,7 @@
 		F9F2A55B0F7AEE9900B7C9EB /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				GCC_ENABLE_CPP_EXCEPTIONS = NO;
 				GCC_ENABLE_CPP_RTTI = NO;

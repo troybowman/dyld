@@ -1,16 +1,16 @@
-/* -*- mode: C++; c-basic-offset: 4; tab-width: 4 -*- 
+/* -*- mode: C++; c-basic-offset: 4; tab-width: 4 -*-
  *
  * Copyright (c) 2006-2011 Apple Inc. All rights reserved.
  *
  * @APPLE_LICENSE_HEADER_START@
- * 
+ *
  * This file contains Original Code and/or Modifications of Original Code
  * as defined in and that are subject to the Apple Public Source License
  * Version 2.0 (the 'License'). You may not use this file except in
  * compliance with the License. Please obtain a copy of the License at
  * http://www.opensource.apple.com/apsl/ and read it before using this
  * file.
- * 
+ *
  * The Original Code and all software distributed under the License are
  * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
  * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
@@ -18,7 +18,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
  * Please see the License for the specific language governing rights and
  * limitations under the License.
- * 
+ *
  * @APPLE_LICENSE_HEADER_END@
  */
 
@@ -38,7 +38,7 @@
 #include <unistd.h>
 #include <mach-o/loader.h>
 #include <mach-o/fat.h>
-#include <rootless.h>
+//#include <rootless.h>
 
 #include <vector>
 #include <set>
@@ -51,14 +51,14 @@
 void throwf(const char* format, ...) __attribute__((format(printf, 1, 2)));
 
 __attribute__((noreturn))
-void throwf(const char* format, ...) 
+void throwf(const char* format, ...)
 {
 	va_list	list;
 	char*	p;
 	va_start(list, format);
 	vasprintf(&p, format, list);
 	va_end(list);
-	
+
 	const char*	t = p;
 	throw t;
 }
@@ -73,13 +73,13 @@ public:
 					Segment(uint64_t addr, uint64_t vmsize, uint64_t offset, uint64_t file_size, uint64_t sectionsSize,
 							uint64_t sectionsAlignment, uint64_t align,
 							uint32_t prot, uint32_t sectionCount, const char* segName) : fOrigAddress(addr), fOrigSize(vmsize),
-							fOrigFileOffset(offset),  fOrigFileSize(file_size), fOrigPermissions(prot), 
+							fOrigFileOffset(offset),  fOrigFileSize(file_size), fOrigPermissions(prot),
 							fSize(vmsize), fFileOffset(offset), fFileSize(file_size), fAlignment(align),
 							fPermissions(prot), fSectionCount(sectionCount), fSectionsSize(sectionsSize),
 							fSectionsAlignment(sectionsAlignment), fNewAddress(0), fMappedAddress(NULL) {
 								strlcpy(fOrigName, segName, 16);
 							}
-							
+
 		uint64_t	address() const		{ return fOrigAddress; }
 		uint64_t	size() const		{ return fSize; }
 		uint64_t	fileOffset() const	{ return fFileOffset; }
@@ -129,8 +129,8 @@ public:
 		uint32_t	compatibilityVersion;
 		bool		weakImport;
 	};
-	
-	
+
+
 	virtual ArchPair							getArchPair() const = 0;
 	virtual const char*							getFilePath() const = 0;
 	virtual uint64_t							getOffsetInUniversalFile() const	= 0;
@@ -215,12 +215,12 @@ public:
 	virtual const uint8_t*						getDyldInfoExports() const		{ return fDyldInfoExports; }
 	virtual void								setDyldInfoExports(const uint8_t* newExports) const { fDyldInfoExports = newExports; }
 	virtual void								uuid(uuid_t u) const { memcpy(u, fUUID, 16); }
-	
+
 private:
 	typedef typename A::P					P;
 	typedef typename A::P::E				E;
 	typedef typename A::P::uint_t			pint_t;
-	
+
 	uint64_t									segmentSize(const macho_segment_command<typename A::P>* segCmd) const;
 	uint64_t									segmentFileSize(const macho_segment_command<typename A::P>* segCmd) const;
 	uint64_t									segmentAlignment(const macho_segment_command<typename A::P>* segCmd) const;
@@ -228,7 +228,7 @@ private:
 	uint64_t									sectionsAlignment(const macho_segment_command<typename A::P>* segCmd) const;
 
 	bool										validReadWriteSeg(const Segment& seg) const;
-	
+
 	static cpu_type_t							arch();
 
 	const char*									fPath;
@@ -334,13 +334,13 @@ const UniversalMachOLayout& UniversalMachOLayout::find(const char* path, const s
 	PathToNode::iterator pos = fgLayoutCache.find(path);
 	if ( pos != fgLayoutCache.end() )
 		return *pos->second;
-		
+
 	// create UniversalMachOLayout
 	const UniversalMachOLayout* result = new UniversalMachOLayout(path, onlyArchs);
-	
+
 	// add it to cache
 	fgLayoutCache[result->fPath] = result;
-	
+
 	return *result;
 }
 
@@ -355,7 +355,7 @@ bool UniversalMachOLayout::requestedSlice(const std::set<ArchPair>* onlyArchs, c
 		if ( cpuType == anArch.arch ) {
             switch ( cpuType ) {
                 case CPU_TYPE_ARM:
-                    if ( cpuSubType == anArch.subtype ) 
+                    if ( cpuSubType == anArch.subtype )
                         return true;
                     break;
                 default:
@@ -401,11 +401,11 @@ UniversalMachOLayout::UniversalMachOLayout(const char* path, const std::set<Arch
 				if ( requestedSlice(onlyArchs, OSSwapBigToHostInt32(slices[i].cputype), OSSwapBigToHostInt32(slices[i].cpusubtype)) ) {
 					uint32_t fileOffset = OSSwapBigToHostInt32(slices[i].offset);
 					if ( fileOffset > stat_buf.st_size ) {
-						throwf("malformed universal file, slice %u for architecture 0x%08X is beyond end of file: %s", 
+						throwf("malformed universal file, slice %u for architecture 0x%08X is beyond end of file: %s",
 								i, OSSwapBigToHostInt32(slices[i].cputype), path);
 					}
 					if ( (fileOffset+OSSwapBigToHostInt32(slices[i].size)) > stat_buf.st_size ) {
-						throwf("malformed universal file, slice %u for architecture 0x%08X is beyond end of file: %s", 
+						throwf("malformed universal file, slice %u for architecture 0x%08X is beyond end of file: %s",
 								i, OSSwapBigToHostInt32(slices[i].cputype), path);
 					}
 					try {
@@ -435,19 +435,19 @@ UniversalMachOLayout::UniversalMachOLayout(const char* path, const std::set<Arch
 		else {
 			try {
 				if ( (OSSwapLittleToHostInt32(mh->magic) == MH_MAGIC) && (OSSwapLittleToHostInt32(mh->cputype) == CPU_TYPE_I386)) {
-					if ( requestedSlice(onlyArchs, OSSwapLittleToHostInt32(mh->cputype), OSSwapLittleToHostInt32(mh->cpusubtype)) ) 
+					if ( requestedSlice(onlyArchs, OSSwapLittleToHostInt32(mh->cputype), OSSwapLittleToHostInt32(mh->cpusubtype)) )
 						fLayouts.push_back(new MachOLayout<x86>(mh, 0, fPath, stat_buf.st_ino, stat_buf.st_mtime, stat_buf.st_uid));
 				}
 				else if ( (OSSwapLittleToHostInt32(mh->magic) == MH_MAGIC_64) && (OSSwapLittleToHostInt32(mh->cputype) == CPU_TYPE_X86_64)) {
-					if ( requestedSlice(onlyArchs, OSSwapLittleToHostInt32(mh->cputype), OSSwapLittleToHostInt32(mh->cpusubtype)) ) 
+					if ( requestedSlice(onlyArchs, OSSwapLittleToHostInt32(mh->cputype), OSSwapLittleToHostInt32(mh->cpusubtype)) )
 						fLayouts.push_back(new MachOLayout<x86_64>(mh, 0, fPath, stat_buf.st_ino, stat_buf.st_mtime, stat_buf.st_uid));
 				}
 				else if ( (OSSwapLittleToHostInt32(mh->magic) == MH_MAGIC) && (OSSwapLittleToHostInt32(mh->cputype) == CPU_TYPE_ARM)) {
-					if ( requestedSlice(onlyArchs, OSSwapLittleToHostInt32(mh->cputype), OSSwapLittleToHostInt32(mh->cpusubtype)) ) 
+					if ( requestedSlice(onlyArchs, OSSwapLittleToHostInt32(mh->cputype), OSSwapLittleToHostInt32(mh->cpusubtype)) )
 						fLayouts.push_back(new MachOLayout<arm>(mh, 0, fPath, stat_buf.st_ino, stat_buf.st_mtime, stat_buf.st_uid));
 				}
 				else if ( (OSSwapLittleToHostInt32(mh->magic) == MH_MAGIC_64) && (OSSwapLittleToHostInt32(mh->cputype) == CPU_TYPE_ARM64)) {
-					if ( requestedSlice(onlyArchs, OSSwapLittleToHostInt32(mh->cputype), OSSwapLittleToHostInt32(mh->cpusubtype)) ) 
+					if ( requestedSlice(onlyArchs, OSSwapLittleToHostInt32(mh->cputype), OSSwapLittleToHostInt32(mh->cpusubtype)) )
 						fLayouts.push_back(new MachOLayout<arm64>(mh, 0, fPath, stat_buf.st_ino, stat_buf.st_mtime, stat_buf.st_uid));
 				}
 				else {
@@ -478,7 +478,7 @@ uint64_t MachOLayout<A>::segmentSize(const macho_segment_command<typename A::P>*
 		if ( endSectAddrPage < (segCmd->vmaddr() + segCmd->vmsize()) ) {
 			uint64_t size =  endSectAddrPage - segCmd->vmaddr();
 			//if ( size != segCmd->vmsize() )
-			//	fprintf(stderr, "trim %s size=0x%08llX instead of 0x%08llX for %s\n", 
+			//	fprintf(stderr, "trim %s size=0x%08llX instead of 0x%08llX for %s\n",
 			//		segCmd->segname(), size, segCmd->vmsize(), getFilePath());
 			return size;
 		}
@@ -515,7 +515,7 @@ uint64_t MachOLayout<A>::segmentFileSize(const macho_segment_command<typename A:
 		}
 		uint64_t size = (endOffset - segCmd->fileoff() + 4095) & (-4096);
 		//if ( size != segCmd->filesize() )
-		//	fprintf(stderr, "trim %s filesize=0x%08llX instead of 0x%08llX for %s\n", 
+		//	fprintf(stderr, "trim %s filesize=0x%08llX instead of 0x%08llX for %s\n",
 		//		segCmd->segname(), size, segCmd->filesize(), getFilePath());
 		return size;
 	}
@@ -557,14 +557,14 @@ uint64_t MachOLayout<A>::sectionsAlignment(const macho_segment_command<typename 
 template <typename A>
 MachOLayout<A>::MachOLayout(const void* machHeader, uint64_t offset, const char* path, ino_t inode, time_t modTime, uid_t uid)
  : fPath(path), fOffset(offset), fArchPair(0,0), fMTime(modTime), fInode(inode), fSplitSegInfo(NULL), fHasSplitSegInfoV2(false), fRootlessErrno(0),
-   fShareableLocation(false), fDynamicLookupLinkage(false), fMainExecutableLookupLinkage(false), fIsDylib(false), 
+   fShareableLocation(false), fDynamicLookupLinkage(false), fMainExecutableLookupLinkage(false), fIsDylib(false),
 	fHasDyldInfo(false), fHasTooManyWritableSegments(false), fDyldInfoExports(NULL)
 {
 	fDylibID.name = NULL;
 	fDylibID.currentVersion = 0;
 	fDylibID.compatibilityVersion = 0;
 	bzero(fUUID, sizeof(fUUID));
-	
+
 	const macho_header<P>* mh = (const macho_header<P>*)machHeader;
 	if ( mh->cputype() != arch() )
 		throw "Layout object is wrong architecture";
@@ -584,8 +584,8 @@ MachOLayout<A>::MachOLayout(const void* machHeader, uint64_t offset, const char*
 	fFileType = mh->filetype();
 	fArchPair.arch = mh->cputype();
 	fArchPair.subtype = mh->cpusubtype();
-	if ( rootless_check_trusted(path) != 0 && rootless_protected_volume(path) == 1)
-		fRootlessErrno = errno;
+	//if ( rootless_check_trusted(path) != 0 && rootless_protected_volume(path) == 1)
+		//fRootlessErrno = errno;
 
 	const macho_dyld_info_command<P>* dyldInfo = NULL;
 	const macho_symtab_command<P>* symbolTableCmd = NULL;
@@ -595,7 +595,7 @@ MachOLayout<A>::MachOLayout(const void* machHeader, uint64_t offset, const char*
 	const macho_load_command<P>* cmd = cmds;
 	for (uint32_t i = 0; i < cmd_count; ++i) {
 		switch ( cmd->cmd() ) {
-			case LC_ID_DYLIB:	
+			case LC_ID_DYLIB:
 				{
 					macho_dylib_command<P>* dylib  = (macho_dylib_command<P>*)cmd;
 					fDylibID.name = strdup(dylib->name());
@@ -625,7 +625,7 @@ MachOLayout<A>::MachOLayout(const void* machHeader, uint64_t offset, const char*
 			case macho_segment_command<P>::CMD:
 				{
 					const macho_segment_command<P>* segCmd = (macho_segment_command<P>*)cmd;
-					fSegments.push_back(Segment(segCmd->vmaddr(), segmentSize(segCmd), segCmd->fileoff(), 
+					fSegments.push_back(Segment(segCmd->vmaddr(), segmentSize(segCmd), segCmd->fileoff(),
 								segmentFileSize(segCmd), sectionsSize(segCmd), sectionsAlignment(segCmd),
 								segmentAlignment(segCmd), segCmd->initprot(),
 								segCmd->nsects(), segCmd->segname()));
@@ -684,10 +684,10 @@ MachOLayout<A>::MachOLayout(const void* machHeader, uint64_t offset, const char*
 			if ( (fLowReadOnlySegment == NULL) || (seg.address() < fLowReadOnlySegment->address()) )
 				fLowReadOnlySegment = &seg;
 			fVMReadOnlySize += seg.size();
-		}		
+		}
 	}
 	if ( (highSegment != NULL) && (fLowSegment != NULL) )
-		fVMSize = (highSegment->address() + highSegment->size() - fLowSegment->address() + 4095) & (-4096);			
+		fVMSize = (highSegment->address() + highSegment->size() - fLowSegment->address() + 4095) & (-4096);
 
 	// scan undefines looking, for magic ordinals
 	if ( (symbolTableCmd != NULL) && (dynamicSymbolTableCmd != NULL) ) {
@@ -702,7 +702,7 @@ MachOLayout<A>::MachOLayout(const void* machHeader, uint64_t offset, const char*
 				fMainExecutableLookupLinkage = true;
 		}
 	}
-	
+
 	if ( dyldInfo != NULL ) {
 		if ( dyldInfo->export_off() != 0 ) {
 			fDyldInfoExports = (uint8_t*)machHeader + dyldInfo->export_off();

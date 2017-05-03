@@ -1,16 +1,16 @@
-/* -*- mode: C++; c-basic-offset: 4; tab-width: 4 -*- 
+/* -*- mode: C++; c-basic-offset: 4; tab-width: 4 -*-
  *
  * Copyright (c) 2006-2011 Apple Inc. All rights reserved.
  *
  * @APPLE_LICENSE_HEADER_START@
- * 
+ *
  * This file contains Original Code and/or Modifications of Original Code
  * as defined in and that are subject to the Apple Public Source License
  * Version 2.0 (the 'License'). You may not use this file except in
  * compliance with the License. Please obtain a copy of the License at
  * http://www.opensource.apple.com/apsl/ and read it before using this
  * file.
- * 
+ *
  * The Original Code and all software distributed under the License are
  * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
  * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
@@ -18,7 +18,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
  * Please see the License for the specific language governing rights and
  * limitations under the License.
- * 
+ *
  * @APPLE_LICENSE_HEADER_END@
  */
 
@@ -48,7 +48,7 @@
 #include <mach-o/fat.h>
 #include <CoreFoundation/CoreFoundation.h>
 #include <Security/Security.h>
-#include <Security/SecCodeSigner.h>
+//#include <Security/SecCodeSigner.h>
 #include <CommonCrypto/CommonDigest.h>
 
 #include "dyld_cache_format.h"
@@ -89,14 +89,14 @@ static void warn(const char *arch, const char *format, ...)
     va_start(args, format);
     ::vasprintf(&msg, format, args);
     va_end(args);
-    
+
     warnings.push_back(msg);
-    
+
     if ( verbose ) {
-        ::fprintf(::stderr, "update_dyld_shared_cache: warning: %s%s%s%s\n", 
-                  arch ? "for arch " : "", 
-                  arch ? arch : "", 
-                  arch ? ", " : "", 
+        ::fprintf(::stderr, "update_dyld_shared_cache: warning: %s%s%s%s\n",
+                  arch ? "for arch " : "",
+                  arch ? arch : "",
+                  arch ? ", " : "",
                   msg);
     }
 }
@@ -132,14 +132,14 @@ public:
 	static void			setFileSystemRoot(const char* root) { fgFileSystemRoot = root; }
 	static void			setFileSystemOverlay(const std::vector<const char*>& overlays);
 	static const char*	archName(ArchPair ap);
-	
+
 	ArchPair											getArchPair() { return fArchPair; }
 	std::set<const class MachOLayoutAbstraction*>&		getSharedDylibs() { return fSharedDylibs; }
 	StringToString&										getDylibAliases() { return fAliasesMap; }
 	const char*											archName() { return archName(fArchPair); }
-	
+
 private:
-	
+
 	class DependencyNode
 	{
 	public:
@@ -175,7 +175,7 @@ private:
 	static std::map<ArchPair, ArchGraph*>	fgPerArchGraph;
 	static const char*						fgFileSystemRoot;
 	static std::vector<const char*> 		fgFileSystemOverlays;
-	
+
 	ArchPair									fArchPair;
 	std::set<DependencyNode*>					fRoots;
 	PathToNode									fNodes;
@@ -192,9 +192,9 @@ void ArchGraph::addArchPair(ArchPair ap)
 	fgPerArchGraph[ap] = new ArchGraph(ap);
 }
 
-void ArchGraph::setFileSystemOverlay(const std::vector<const char*>& overlays) 
-{ 
-	for (std::vector<const char*>::const_iterator it=overlays.begin(); it != overlays.end(); ++it) 
+void ArchGraph::setFileSystemOverlay(const std::vector<const char*>& overlays)
+{
+	for (std::vector<const char*>::const_iterator it=overlays.begin(); it != overlays.end(); ++it)
 		fgFileSystemOverlays.push_back(*it);
 }
 
@@ -221,9 +221,9 @@ void ArchGraph::addRoot(const char* vpath, const std::set<ArchPair>& onlyArchs)
 		if ( stat(completePath, &stat_buf) == 0 )
 			path = completePath;
 	}
-	if ( path == NULL ) 
+	if ( path == NULL )
 		path = vpath;
-	
+
 	try {
 		//fprintf(stderr, "    UniversalMachOLayout::find(%s)\n", path);
 		const UniversalMachOLayout& uni = UniversalMachOLayout::find(path, &onlyArchs);
@@ -234,10 +234,10 @@ void ArchGraph::addRoot(const char* vpath, const std::set<ArchPair>& onlyArchs)
 					fgPerArchGraph[*ait]->addRoot(path, layout);
 			}
 			catch (const char* msg) {
-				if ( verbose ) 
+				if ( verbose )
 					fprintf(stderr, "update_dyld_shared_cache: warning for %s can't use root '%s': %s\n", fgPerArchGraph[*ait]->archName(), path, msg);
 			}
-			
+
 		}
 	}
 	catch (const char* msg) {
@@ -298,7 +298,7 @@ ArchGraph::DependencyNode* ArchGraph::getNodeForVirtualPath(const char* vpath)
 						// (re)try looking for what symlink points to, but in /overlay
 						return this->getNodeForVirtualPath(symFullPath);
 					}
-				} 
+				}
 			}
 		}
 	}
@@ -320,12 +320,12 @@ ArchGraph::DependencyNode* ArchGraph::getNode(const char* path)
 	PathToNode::iterator pos = fNodes.find(path);
 	if ( pos != fNodes.end() )
 		return pos->second;
-	
+
 	// get real path
 	char realPath[MAXPATHLEN];
 	if ( realpath(path, realPath) == NULL )
 		throwf("realpath() failed on %s\n", path);
-	
+
 	// look up real path to see if node already exists
 	pos = fNodes.find(realPath);
 	if ( pos != fNodes.end() ) {
@@ -342,7 +342,7 @@ ArchGraph::DependencyNode* ArchGraph::getNode(const char* path)
 		}
 		return pos->second;
 	}
-	
+
 	// still does not exist, so create a new node
 	const UniversalMachOLayout& uni = UniversalMachOLayout::find(realPath);
 	DependencyNode* node = new DependencyNode(this, realPath, uni.getSlice(fArchPair));
@@ -364,14 +364,14 @@ ArchGraph::DependencyNode* ArchGraph::getNode(const char* path)
 			if ( memcmp(&uuid1, &uuid2, 16) == 0 ) {
 				// <rdar://problem/8305479> warn if two dylib in cache have same install_name
 				char* msg;
-				asprintf(&msg, "update_dyld_shared_cache: warning, found two copies of the same dylib with same install path: %s\n\t%s\n\t%s\n", 
+				asprintf(&msg, "update_dyld_shared_cache: warning, found two copies of the same dylib with same install path: %s\n\t%s\n\t%s\n",
 										node->getLayout()->getID().name, pos->second->getPath(), node->getPath());
 				fprintf(stderr, "%s", msg);
 				warnings.push_back(msg);
 			}
 			else {
 				// <rdar://problem/12763450> update_dyld_shared_cache should fail if two images have same install name
-				fprintf(stderr, "update_dyld_shared_cache: found two different dylibs with same install path: %s\n\t%s\n\t%s\n", 
+				fprintf(stderr, "update_dyld_shared_cache: found two different dylibs with same install path: %s\n\t%s\n\t%s\n",
 							node->getLayout()->getID().name, pos->second->getPath(), node->getPath());
 				exit(1);
 			}
@@ -400,8 +400,8 @@ ArchGraph::DependencyNode* ArchGraph::getNode(const char* path)
 	}
 	return node;
 }
-	
-	
+
+
 void ArchGraph::DependencyNode::loadDependencies(const MachOLayoutAbstraction* mainExecutableLayout)
 {
 	if ( !fDependenciesLoaded ) {
@@ -491,7 +491,7 @@ void ArchGraph::DependencyNode::markNeededByRoot(ArchGraph::DependencyNode* root
 
 
 
-ArchGraph::DependencyNode::DependencyNode(ArchGraph* graph, const char* path, const MachOLayoutAbstraction* layout) 
+ArchGraph::DependencyNode::DependencyNode(ArchGraph* graph, const char* path, const MachOLayoutAbstraction* layout)
  : fGraph(graph), fPath(strdup(path)), fLayout(layout), fDependenciesLoaded(false), fDependentMissing(false)
 {
 	//fprintf(stderr, "new DependencyNode(0x%08X, %s)\n", graph->fArch, path);
@@ -540,7 +540,7 @@ void ArchGraph::findSharedDylibs(ArchPair ap)
 			}
 		}
 	}
-	
+
 	// prune so that all shareable libs depend only on other shareable libs
 	std::set<const MachOLayoutAbstraction*>& sharedLibs = fgPerArchGraph[ap]->fSharedDylibs;
 	std::map<const MachOLayoutAbstraction*,bool> shareableMap;
@@ -632,11 +632,11 @@ const char*	ArchGraph::archName(ArchPair ap)
 bool ArchGraph::sharable(const MachOLayoutAbstraction* layout, ArchPair ap, char** msg)
 {
 	int trustErr = layout->notTrusted();
-	if ( ! layout->isTwoLevelNamespace() ) 
+	if ( ! layout->isTwoLevelNamespace() )
 		asprintf(msg, "can't put %s in shared cache because it was built -flat_namespace", layout->getID().name);
 	else if ( ! layout->inSharableLocation() )
 		asprintf(msg, "can't put %s in shared cache because its -install_name is not in /usr/lib or /System/Library", layout->getID().name);
-	else if ( ! layout->hasSplitSegInfo() ) 
+	else if ( ! layout->hasSplitSegInfo() )
 		asprintf(msg, "can't put %s in shared cache because it was not built for %s or later", layout->getID().name, (iPhoneOS ? "iPhoneOS 3.1" : "MacOSX 10.5"));
 	else if ( rootless == true && trustErr != 0 )
 		asprintf(msg, "can't put %s in shared cache because it is not trusted: %s", layout->getFilePath(), strerror(trustErr));
@@ -717,7 +717,7 @@ public:
 	uint32_t	add(const char* str);
 	uint32_t	addUnique(const char* str);
 	const char* stringAtIndex(uint32_t) const;
-	
+
 private:
 	typedef std::unordered_map<const char*, uint32_t, CStringHash, CStringEquals> StringToOffset;
 
@@ -728,7 +728,7 @@ private:
 };
 
 
-StringPool::StringPool() 
+StringPool::StringPool()
 	: fBufferUsed(0), fBufferAllocated(128*1024*1024)
 {
 	fBuffer = (char*)malloc(fBufferAllocated);
@@ -751,7 +751,7 @@ uint32_t StringPool::add(const char* str)
 uint32_t StringPool::addUnique(const char* str)
 {
 	StringToOffset::iterator pos = fUniqueStrings.find(str);
-	if ( pos != fUniqueStrings.end() ) 
+	if ( pos != fUniqueStrings.end() )
 		return pos->second;
 	else {
 		//fprintf(stderr, "StringPool::addUnique() new string: %s\n", str);
@@ -790,7 +790,7 @@ class SharedCache
 public:
 							SharedCache(ArchGraph* graph, const char* rootPath, const std::vector<const char*>& overlayPaths, const char* cacheDir, bool explicitCacheDir,
 											bool alphaSort, bool verify, bool optimize, uint64_t dyldBaseAddress);
-	bool					update(bool force, bool optimize, bool deleteExistingFirst, int archIndex, 
+	bool					update(bool force, bool optimize, bool deleteExistingFirst, int archIndex,
 										int archCount, bool keepSignatures, bool dontMapLocalSymbols);
 	void					writeCacheFile(const char *cacheFilePath, uint8_t *cacheFileBuffer, uint32_t cacheFileSize, bool deleteOldCache);
 	static const char*		cacheFileSuffix(bool optimized, const char* archName);
@@ -824,7 +824,7 @@ private:
 	static uint64_t			getWritableSegmentNewAddress(uint64_t proposedNewAddress, uint64_t originalAddress, uint64_t executableSlide);
 	static bool				addCacheSlideInfo();
 	static uint64_t			pathHash(const char*);
-	
+
 	static uint64_t			pageAlign(uint64_t addr);
 	static uint64_t			regionAlign(uint64_t addr);
 	static uint64_t			pageAlign4KB(uint64_t addr);
@@ -835,15 +835,15 @@ private:
 		std::vector<const char*>			aliases;
 		dyld_cache_image_info				info;
 	};
-	
+
 	struct ByNameSorter {
-		bool operator()(const LayoutInfo& left, const LayoutInfo& right) 
+		bool operator()(const LayoutInfo& left, const LayoutInfo& right)
 				{ return (strcmp(left.layout->getID().name, right.layout->getID().name) < 0); }
 	};
-	
+
 	struct ByAddressSorter {
-		bool operator()(const LayoutInfo& left, const LayoutInfo& right) { 
-			return (left.layout->getSegments()[0].newAddress() < right.layout->getSegments()[0].newAddress()); 
+		bool operator()(const LayoutInfo& left, const LayoutInfo& right) {
+			return (left.layout->getSegments()[0].newAddress() < right.layout->getSegments()[0].newAddress());
 		}
 	};
 
@@ -851,7 +851,7 @@ private:
         bool operator()(const LayoutInfo& left, const LayoutInfo& right) {
             const std::vector<MachOLayoutAbstraction::Segment>& segs_l =
                 left.layout->getSegments();
-            const std::vector<MachOLayoutAbstraction::Segment>& segs_r = 
+            const std::vector<MachOLayoutAbstraction::Segment>& segs_r =
                 right.layout->getSegments();
             if (segs_l.size() == 0  ||  segs_r.size() == 0) {
                 // one image has no segments
@@ -873,13 +873,13 @@ private:
 	struct Sorter {
 		Sorter(std::map<const MachOLayoutAbstraction*, uint32_t>& map): fMap(map) {}
 		bool operator()(const LayoutInfo& left, const LayoutInfo& right) {
-			return (fMap[left.layout] < fMap[right.layout]); 
+			return (fMap[left.layout] < fMap[right.layout]);
 		}
 	private:
 		std::map<const MachOLayoutAbstraction*, uint32_t>& fMap;
 	};
-	
-	
+
+
 	ArchGraph*							fArchGraph;
 	const bool							fVerify;
 	bool								fExistingIsNotUpToDate;
@@ -921,7 +921,7 @@ private:
 
 // Access a section containing a list of pointers
 template <typename A, typename T>
-class PointerSection 
+class PointerSection
 {
     typedef typename A::P P;
     typedef typename A::P::uint_t pint_t;
@@ -932,7 +932,7 @@ class PointerSection
     pint_t							fCount;
 
 public:
-    PointerSection(SharedCache<A>* cache, const macho_header<P>* header, 
+    PointerSection(SharedCache<A>* cache, const macho_header<P>* header,
                    const char *segname, const char *sectname)
         : fCache(cache)
         , fSection(header->getSection(segname, sectname))
@@ -948,7 +948,7 @@ public:
         return P::getP(fBase[index]);
     }
 
-    T get(pint_t index) const { 
+    T get(pint_t index) const {
         return (T)fCache->mappedAddressForVMAddress(getVMAddress(index));
     }
 
@@ -956,7 +956,7 @@ public:
         if (index >= fCount) throwf("index out of range");
         P::setP(fBase[index], value);
     }
-	
+
     void removeNulls() {
         pint_t shift = 0;
         for (pint_t i = 0; i < fCount; i++) {
@@ -974,7 +974,7 @@ public:
 
 // Access a section containing an array of structures
 template <typename A, typename T>
-class ArraySection 
+class ArraySection
 {
     typedef typename A::P P;
 
@@ -984,7 +984,7 @@ class ArraySection
     uint64_t const fCount;
 
 public:
-    ArraySection(SharedCache<A>* cache, const macho_header<P>* header, 
+    ArraySection(SharedCache<A>* cache, const macho_header<P>* header,
                  const char *segname, const char *sectname)
         : fCache(cache)
         , fSection(header->getSection(segname, sectname))
@@ -995,7 +995,7 @@ public:
 
     uint64_t count() const { return fCount; }
 
-    T& get(uint64_t index) const { 
+    T& get(uint64_t index) const {
         if (index >= fCount) throwf("index out of range");
         return fBase[index];
     }
@@ -1007,7 +1007,7 @@ public:
 #include "ObjCModernAbstraction.hpp"
 
 
-	
+
 template <>	 cpu_type_t	SharedCache<x86>::arch()	{ return CPU_TYPE_I386; }
 template <>	 cpu_type_t	SharedCache<x86_64>::arch()	{ return CPU_TYPE_X86_64; }
 template <>	 cpu_type_t	SharedCache<arm>::arch()	{ return CPU_TYPE_ARM; }
@@ -1054,12 +1054,12 @@ template <>  uint64_t		SharedCache<arm>::regionAlign(uint64_t addr)    { return 
 template <>  uint64_t		SharedCache<arm64>::regionAlign(uint64_t addr)  { return ( (addr + 16383) & (-16384) ); }
 
 
-template <typename A>  
+template <typename A>
 uint64_t SharedCache<A>::pageAlign4KB(uint64_t addr)    { return ( (addr + 4095) & (-4096) ); }
 
 template <typename A>
-SharedCache<A>::SharedCache(ArchGraph* graph, const char* rootPath, const std::vector<const char*>& overlayPaths, const char* cacheDir, bool explicitCacheDir, bool alphaSort, bool verify, bool optimize, uint64_t dyldBaseAddress) 
-  : fArchGraph(graph), fVerify(verify), fExistingIsNotUpToDate(true), 
+SharedCache<A>::SharedCache(ArchGraph* graph, const char* rootPath, const std::vector<const char*>& overlayPaths, const char* cacheDir, bool explicitCacheDir, bool alphaSort, bool verify, bool optimize, uint64_t dyldBaseAddress)
+  : fArchGraph(graph), fVerify(verify), fExistingIsNotUpToDate(true),
 	fCacheFileInFinalLocation(rootPath[0] == '\0'), fCacheFilePath(NULL),
 	fExistingCacheForVerification(NULL), fDyldBaseAddress(dyldBaseAddress),
 	fOffsetOfBindInfoInCombinedLinkedit(0), fOffsetOfWeakBindInfoInCombinedLinkedit(0),
@@ -1074,7 +1074,7 @@ SharedCache<A>::SharedCache(ArchGraph* graph, const char* rootPath, const std::v
 {
 	if ( fArchGraph->getArchPair().arch != arch() )
 		throwf("SharedCache object is wrong architecture: 0x%08X vs 0x%08X", fArchGraph->getArchPair().arch, arch());
-		
+
 	// build vector of all shared dylibs
 	unsigned int aliasCount = 0;
 	std::set<const MachOLayoutAbstraction*>& dylibs = fArchGraph->getSharedDylibs();
@@ -1130,11 +1130,11 @@ SharedCache<A>::SharedCache(ArchGraph* graph, const char* rootPath, const std::v
 
 	// If the path we are writing to is trusted then our sources need to be trusted
 	// <rdar://problem/21166835> Can't update the update_dyld_shared_cache on a non-boot volume
-	rootless = rootless_check_trusted(fCacheFilePath);
+	//rootless = rootless_check_trusted(fCacheFilePath);
 
 	if ( overlayPaths.size() == 1 ) {
 		// in overlay mode if there already is a cache file in the overlay,
-		// check if it is up to date.  
+		// check if it is up to date.
 		struct stat stat_buf;
 		if ( stat(fCacheFilePath, &stat_buf) == 0 ) {
 			fExistingIsNotUpToDate = this->notUpToDate(fCacheFilePath, aliasCount);
@@ -1155,7 +1155,7 @@ SharedCache<A>::SharedCache(ArchGraph* graph, const char* rootPath, const std::v
 	else {
 		fExistingIsNotUpToDate = this->notUpToDate(fCacheFilePath, aliasCount);
 	}
-	
+
 	// sort shared dylibs
 	if ( verify ) {
 		// already sorted by notUpToDate()
@@ -1166,18 +1166,18 @@ SharedCache<A>::SharedCache(ArchGraph* graph, const char* rootPath, const std::v
 	else {
 		// random sort for Address Space Randomization
 		std::map<const MachOLayoutAbstraction*, uint32_t> map;
-		for(typename std::vector<struct LayoutInfo>::const_iterator it = fDylibs.begin(); it != fDylibs.end(); ++it) 
+		for(typename std::vector<struct LayoutInfo>::const_iterator it = fDylibs.begin(); it != fDylibs.end(); ++it)
 			map[it->layout] = arc4random();
 		std::sort(fDylibs.begin(), fDylibs.end(), Sorter(map));
 	}
-	
+
 	// assign segments in each dylib a new address
 	this->assignNewBaseAddresses(verify);
-	
+
 	// calculate where string pool offset will start
 	// calculate cache file header size
-	fHeaderSize = sizeof(dyld_cache_header) 
-							+ fMappings.size()*sizeof(shared_file_mapping_np) 
+	fHeaderSize = sizeof(dyld_cache_header)
+							+ fMappings.size()*sizeof(shared_file_mapping_np)
 							+ (fDylibs.size()+aliasCount)*sizeof(dyld_cache_image_info);
 	const uint64_t baseHeaderSize = fHeaderSize;
 	//fprintf(stderr, "aliasCount=%d, fHeaderSize=0x%08X\n", aliasCount, fHeaderSize);
@@ -1189,9 +1189,9 @@ SharedCache<A>::SharedCache(ArchGraph* graph, const char* rootPath, const std::v
 			const char* aliasPath = *ait;
 			temp.aliases.clear();
 			temp.aliases.push_back(aliasPath);
-			temp.info.pathFileOffset = fHeaderSize; 
+			temp.info.pathFileOffset = fHeaderSize;
 			if ( iPhoneOS ) {
-				temp.info.inode = pathHash(aliasPath); 
+				temp.info.inode = pathHash(aliasPath);
 				temp.info.modTime = 0;
 			}
 			fDylibAliases.push_back(temp);
@@ -1201,7 +1201,7 @@ SharedCache<A>::SharedCache(ArchGraph* graph, const char* rootPath, const std::v
 	std::sort(fDylibAliases.begin(), fDylibAliases.end(), ByNameSorter());
 	//fprintf(stderr, "fHeaderSize=0x%08X, fDylibAliases.size()=%lu\n", fHeaderSize, fDylibAliases.size());
 	fHeaderSize = pageAlign(fHeaderSize);
-	
+
 	// check that cache we are about to create for verification purposes has same layout as existing cache
 	if ( verify ) {
 		// if no existing cache, say so
@@ -1218,8 +1218,8 @@ SharedCache<A>::SharedCache(ArchGraph* graph, const char* rootPath, const std::v
 			}
 		}
 	}
-	
-	
+
+
 	if ( fHeaderSize > FIRST_DYLIB_TEXT_OFFSET )
 		throwf("header size overflow: allowed=0x%08X, base=0x%08llX, aliases=0x%08llX", FIRST_DYLIB_TEXT_OFFSET, baseHeaderSize, fHeaderSize-baseHeaderSize);
 }
@@ -1239,14 +1239,14 @@ uint64_t SharedCache<A>::pathHash(const char* path)
 		sum += sum*4 + *s;
 	return sum;
 }
-	
+
 
 template <typename A>
 void SharedCache<A>::assignNewBaseAddresses(bool verify)
 {
 	// first layout TEXT for dylibs
 	const uint64_t startExecuteAddress = sharedRegionStartAddress();
-	uint64_t currentExecuteAddress = startExecuteAddress + FIRST_DYLIB_TEXT_OFFSET;	
+	uint64_t currentExecuteAddress = startExecuteAddress + FIRST_DYLIB_TEXT_OFFSET;
 	for(typename std::vector<LayoutInfo>::iterator it = fDylibs.begin(); it != fDylibs.end(); ++it) {
 		std::vector<MachOLayoutAbstraction::Segment>& segs = ((MachOLayoutAbstraction*)(it->layout))->getSegments();
 		for (int i=0; i < segs.size(); ++i) {
@@ -1276,7 +1276,7 @@ void SharedCache<A>::assignNewBaseAddresses(bool verify)
 	for (const LayoutInfo& info : fDylibs ) {
 		for (MachOLayoutAbstraction::Segment& seg : ((MachOLayoutAbstraction*)(info.layout))->getSegments()) {
 			if ( seg.writable() ) {
-				if ( seg.executable() ) 
+				if ( seg.executable() )
 					throw "found writable and executable segment";
 				seg.reset();
 				if ( strcmp(seg.name(), "__DATA_CONST") == 0 )
@@ -1358,7 +1358,7 @@ void SharedCache<A>::assignNewBaseAddresses(bool verify)
 				currentReadOnlyAddress += pageAlign(seg.size());
 			}
 		}
-	}	
+	}
 
 	// layout all LINKEDIT segments at end of all read-only segments
 	currentReadOnlyAddress = regionAlign(currentReadOnlyAddress); // <rdar://problem/16491435>
@@ -1369,7 +1369,7 @@ void SharedCache<A>::assignNewBaseAddresses(bool verify)
 		for(int i=0; i < segs.size(); ++i) {
 			MachOLayoutAbstraction::Segment& seg = segs[i];
 			if ( seg.readable() && !seg.writable() && !seg.executable() && (strcmp(seg.name(), "__LINKEDIT") == 0) ) {
-				if ( fFirstLinkEditSegment == NULL ) 
+				if ( fFirstLinkEditSegment == NULL )
 					fFirstLinkEditSegment = &seg;
 				seg.setNewAddress(currentReadOnlyAddress);
 				currentReadOnlyAddress += pageAlign(seg.size());
@@ -1389,7 +1389,7 @@ void SharedCache<A>::assignNewBaseAddresses(bool verify)
 		executeMapping.sfm_init_prot	= VM_PROT_READ | VM_PROT_EXECUTE;
 		fMappings.push_back(executeMapping);
 		cacheFileOffset += executeMapping.sfm_size;
-		
+
 		shared_file_mapping_np  writableMapping;
 		writableMapping.sfm_address		= startWritableAddress;
 		writableMapping.sfm_size		= currentWritableAddress - startWritableAddress;
@@ -1398,7 +1398,7 @@ void SharedCache<A>::assignNewBaseAddresses(bool verify)
 		writableMapping.sfm_init_prot	= VM_PROT_READ | VM_PROT_WRITE;
 		fMappings.push_back(writableMapping);
 		cacheFileOffset += writableMapping.sfm_size;
-				
+
 		// make read-only (contains LINKEDIT segments) last, so it can be cut back when optimized
 		shared_file_mapping_np  readOnlyMapping;
 		readOnlyMapping.sfm_address		= startReadOnlyAddress;
@@ -1492,8 +1492,8 @@ bool SharedCache<A>::notUpToDate(const void* cache, unsigned int aliasCount)
 	// get end of TEXT region
 	const dyldCacheFileMapping<E>* textMapping = (dyldCacheFileMapping<E>*)((uint8_t*)cache+sizeof(dyldCacheHeader<E>));
 	const uint32_t textSize = textMapping->size();
-	
-	// verify every dylib in constructed graph is in existing cache with same inode and modTime	
+
+	// verify every dylib in constructed graph is in existing cache with same inode and modTime
 	std::map<const MachOLayoutAbstraction*, uint32_t> sortingMap;
 	const dyldCacheImageInfo<E>* imagesStart = (dyldCacheImageInfo<E>*)((uint8_t*)cache + header->imagesOffset());
 	const dyldCacheImageInfo<E>* imagesEnd = &imagesStart[header->imagesCount()];
@@ -1503,7 +1503,7 @@ bool SharedCache<A>::notUpToDate(const void* cache, unsigned int aliasCount)
 		for(const dyldCacheImageInfo<E>* cacheEntry = imagesStart; cacheEntry < imagesEnd; ++cacheEntry) {
 			if ( fVerify ) {
 				if ( cacheEntry->pathFileOffset() > textSize ) {
-					throwf("update_dyld_shared_cache[%u]: for arch=%s, image entries corrupt, bad path offset in %s\n", 
+					throwf("update_dyld_shared_cache[%u]: for arch=%s, image entries corrupt, bad path offset in %s\n",
 								getpid(), archPairName, it->layout->getID().name);
 				}
 				// in -verify mode, just match by path and warn if file looks different
@@ -1511,7 +1511,7 @@ bool SharedCache<A>::notUpToDate(const void* cache, unsigned int aliasCount)
 					found = true;
 					sortingMap[it->layout] = cacheEntry-imagesStart;
 					if ( (cacheEntry->inode() != it->info.inode) || (cacheEntry->modTime() != it->info.modTime) ) {
-						fprintf(stderr, "update_dyld_shared_cache[%u] warning: for arch=%s, %s has changed since cache was built\n", 
+						fprintf(stderr, "update_dyld_shared_cache[%u] warning: for arch=%s, %s has changed since cache was built\n",
 								getpid(), archPairName, it->layout->getID().name);
 					}
 					break;
@@ -1523,8 +1523,8 @@ bool SharedCache<A>::notUpToDate(const void* cache, unsigned int aliasCount)
 					return true;
 				}
 				// in normal update mode, everything has to match for cache to be up-to-date
-				if ( (cacheEntry->inode() == it->info.inode) 
-						&& (cacheEntry->modTime() == it->info.modTime) 
+				if ( (cacheEntry->inode() == it->info.inode)
+						&& (cacheEntry->modTime() == it->info.modTime)
 						&& (strcmp((char*)cache+cacheEntry->pathFileOffset(), it->layout->getID().name) == 0) ) {
 					found = true;
 					break;
@@ -1562,8 +1562,8 @@ bool SharedCache<A>::notUpToDate(const void* cache, unsigned int aliasCount)
 template <typename A>
 bool SharedCache<A>::notUpToDate(const char* path, unsigned int aliasCount)
 {
-	// mmap existing cache file 
-	int fd = ::open(path, O_RDONLY);	
+	// mmap existing cache file
+	int fd = ::open(path, O_RDONLY);
 	if ( fd == -1 )
 		return true;
 	struct stat stat_buf;
@@ -1609,7 +1609,7 @@ public:
 		void								copyLazyBindInfo(uint32_t&);
 		void								copyExportInfo(uint32_t&);
 		void								copyLocalSymbols(uint32_t symbolTableOffset, uint32_t&, bool dontMapLocalSymbols,
-															uint8_t* cacheStart, StringPool& unmappedLocalsStringPool, 
+															uint8_t* cacheStart, StringPool& unmappedLocalsStringPool,
 															std::vector<macho_nlist<typename A::P> >& unmappedSymbols,
 															std::vector<LocalSymbolInfo>& info);
 		void								copyExportedSymbols(uint32_t symbolTableOffset, uint32_t&);
@@ -1618,21 +1618,21 @@ public:
 		void								copyIndirectSymbolTable(uint32_t& offset);
 		void								copyFunctionStarts(uint32_t& offset);
 		void								copyDataInCode(uint32_t& offset);
-		void								updateLoadCommands(uint64_t newVMAddress, uint64_t size, uint32_t stringPoolOffset, 
+		void								updateLoadCommands(uint64_t newVMAddress, uint64_t size, uint32_t stringPoolOffset,
 																uint32_t linkEditsFileOffset, bool keepSignatures);
-	
+
 
 protected:
 	typedef typename A::P					P;
 	typedef typename A::P::E				E;
 	typedef typename A::P::uint_t			pint_t;
-			
+
 private:
 
 	const SharedCache<A>&						fSharedCache;
-	const macho_header<P>*						fHeader; 
-	uint8_t*									fNewLinkEditStart;	
-	uint8_t*									fLinkEditBase;		
+	const macho_header<P>*						fHeader;
+	uint8_t*									fNewLinkEditStart;
+	uint8_t*									fLinkEditBase;
 	const MachOLayoutAbstraction&				fLayout;
 	macho_dyld_info_command<P>*					fDyldInfo;
 	macho_dysymtab_command<P>*					fDynamicSymbolTable;
@@ -1671,30 +1671,30 @@ private:
 template <typename A>
 LinkEditOptimizer<A>::LinkEditOptimizer(const MachOLayoutAbstraction& layout, const SharedCache<A>& sharedCache, uint8_t* newLinkEdit, StringPool& stringPool)
  : 	fSharedCache(sharedCache), fLayout(layout), fLinkEditBase(NULL), fNewLinkEditStart(newLinkEdit), fDyldInfo(NULL),
-	fDynamicSymbolTable(NULL), fFunctionStarts(NULL), fDataInCode(NULL), 
+	fDynamicSymbolTable(NULL), fFunctionStarts(NULL), fDataInCode(NULL),
 	fSymbolTableLoadCommand(NULL), fSymbolTable(NULL), fStrings(NULL), fNewStringPool(stringPool),
 	fBindInfoOffsetIntoNewLinkEdit(0), fBindInfoSizeInNewLinkEdit(0),
 	fWeakBindInfoOffsetIntoNewLinkEdit(0), fWeakBindInfoSizeInNewLinkEdit(0),
 	fLazyBindInfoOffsetIntoNewLinkEdit(0), fLazyBindInfoSizeInNewLinkEdit(0),
 	fExportInfoOffsetIntoNewLinkEdit(0), fExportInfoSizeInNewLinkEdit(0),
-	fSymbolTableStartOffsetInNewLinkEdit(0), 
+	fSymbolTableStartOffsetInNewLinkEdit(0),
 	fLocalSymbolsStartIndexInNewLinkEdit(0), fLocalSymbolsCountInNewLinkEdit(0),
 	fExportedSymbolsStartIndexInNewLinkEdit(0), fExportedSymbolsCountInNewLinkEdit(0),
 	fImportSymbolsStartIndexInNewLinkEdit(0), fImportedSymbolsCountInNewLinkEdit(0),
 	fExternalRelocationsOffsetIntoNewLinkEdit(0), fIndirectSymbolTableOffsetInfoNewLinkEdit(0),
 	fFunctionStartsOffsetInNewLinkEdit(0), fDataInCodeOffsetInNewLinkEdit(0),
 	fUnmappedLocalSymbolsStartIndexInNewLinkEdit(0), fUnmappedLocalSymbolsCountInNewLinkEdit(0)
-	
+
 {
 	fHeader = (const macho_header<P>*)fLayout.getSegments()[0].mappedAddress();
 
 	const std::vector<MachOLayoutAbstraction::Segment>& segments = fLayout.getSegments();
 	for(std::vector<MachOLayoutAbstraction::Segment>::const_iterator it = segments.begin(); it != segments.end(); ++it) {
 		const MachOLayoutAbstraction::Segment& seg = *it;
-		if ( strcmp(seg.name(), "__LINKEDIT") == 0 ) 
+		if ( strcmp(seg.name(), "__LINKEDIT") == 0 )
 			fLinkEditBase = (uint8_t*)seg.mappedAddress() - seg.fileOffset();
 	}
-	if ( fLinkEditBase == NULL )	
+	if ( fLinkEditBase == NULL )
 		throw "no __LINKEDIT segment";
 
 	const macho_load_command<P>* const cmds = (macho_load_command<P>*)((uint8_t*)fHeader + sizeof(macho_header<P>));
@@ -1723,12 +1723,12 @@ LinkEditOptimizer<A>::LinkEditOptimizer(const MachOLayoutAbstraction& layout, co
 				break;
 		}
 		cmd = (const macho_load_command<P>*)(((uint8_t*)cmd)+cmd->cmdsize());
-	}	
-	if ( fSymbolTable == NULL )	
+	}
+	if ( fSymbolTable == NULL )
 		throw "no LC_SYMTAB";
-	if ( fDynamicSymbolTable == NULL )	
+	if ( fDynamicSymbolTable == NULL )
 		throw "no LC_DYSYMTAB";
-	
+
 }
 
 
@@ -1738,10 +1738,10 @@ class SymbolSorter
 public:
 	typedef typename A::P P;
 	SymbolSorter(const StringPool& pool) : fStringPool(pool) {}
-	bool operator()(const macho_nlist<P>& left, const macho_nlist<P>& right) { 
-		return (strcmp(fStringPool.stringAtIndex(left.n_strx()) , fStringPool.stringAtIndex(right.n_strx())) < 0); 
-	} 
-	
+	bool operator()(const macho_nlist<P>& left, const macho_nlist<P>& right) {
+		return (strcmp(fStringPool.stringAtIndex(left.n_strx()) , fStringPool.stringAtIndex(right.n_strx())) < 0);
+	}
+
 private:
 	const StringPool& fStringPool;
 };
@@ -1793,7 +1793,7 @@ void LinkEditOptimizer<A>::copyExportInfo(uint32_t& offset)
 
 
 template <typename A>
-void LinkEditOptimizer<A>::copyLocalSymbols(uint32_t symbolTableOffset, uint32_t& symbolIndex, bool dontMapLocalSymbols, uint8_t* cacheStart, 
+void LinkEditOptimizer<A>::copyLocalSymbols(uint32_t symbolTableOffset, uint32_t& symbolIndex, bool dontMapLocalSymbols, uint8_t* cacheStart,
 											StringPool&	unmappedLocalsStringPool, std::vector<macho_nlist<P> >& unmappedSymbols,
 											std::vector<LocalSymbolInfo>& dylibInfos)
 {
@@ -1820,7 +1820,7 @@ void LinkEditOptimizer<A>::copyLocalSymbols(uint32_t symbolTableOffset, uint32_t
 					++symbolIndex;
 				}
 				// copy local symbol to unmmapped locals area
-				unmappedSymbols.push_back(*entry);			
+				unmappedSymbols.push_back(*entry);
 				unmappedSymbols.back().set_n_strx(unmappedLocalsStringPool.addUnique(name));
 			}
 			else {
@@ -1910,7 +1910,7 @@ void LinkEditOptimizer<A>::copyExternalRelocations(uint32_t& offset)
 
 template <typename A>
 void LinkEditOptimizer<A>::copyFunctionStarts(uint32_t& offset)
-{	
+{
 	if ( fFunctionStarts != NULL ) {
 		fFunctionStartsOffsetInNewLinkEdit = offset;
 		memcpy(&fNewLinkEditStart[offset], &fLinkEditBase[fFunctionStarts->dataoff()], fFunctionStarts->datasize());
@@ -1920,7 +1920,7 @@ void LinkEditOptimizer<A>::copyFunctionStarts(uint32_t& offset)
 
 template <typename A>
 void LinkEditOptimizer<A>::copyDataInCode(uint32_t& offset)
-{	
+{
 	if ( fDataInCode != NULL ) {
 		fDataInCodeOffsetInNewLinkEdit = offset;
 		memcpy(&fNewLinkEditStart[offset], &fLinkEditBase[fDataInCode->dataoff()], fDataInCode->datasize());
@@ -1931,12 +1931,12 @@ void LinkEditOptimizer<A>::copyDataInCode(uint32_t& offset)
 
 template <typename A>
 void LinkEditOptimizer<A>::copyIndirectSymbolTable(uint32_t& offset)
-{	
+{
 	fIndirectSymbolTableOffsetInfoNewLinkEdit = offset;
 	const uint32_t* const indirectTable = (uint32_t*)&this->fLinkEditBase[fDynamicSymbolTable->indirectsymoff()];
 	uint32_t* newIndirectTable = (uint32_t*)&fNewLinkEditStart[offset];
 	for (int i=0; i < fDynamicSymbolTable->nindirectsyms(); ++i) {
-		uint32_t oldSymbolIndex = E::get32(indirectTable[i]); 
+		uint32_t oldSymbolIndex = E::get32(indirectTable[i]);
 		uint32_t newSymbolIndex = oldSymbolIndex;
 		if ( (oldSymbolIndex != INDIRECT_SYMBOL_ABS) && (oldSymbolIndex != INDIRECT_SYMBOL_LOCAL) ) {
 			newSymbolIndex = fOldToNewSymbolIndexes[oldSymbolIndex];
@@ -1949,7 +1949,7 @@ void LinkEditOptimizer<A>::copyIndirectSymbolTable(uint32_t& offset)
 }
 
 template <typename A>
-void LinkEditOptimizer<A>::updateLoadCommands(uint64_t newVMAddress, uint64_t leSize, uint32_t stringPoolOffset, 
+void LinkEditOptimizer<A>::updateLoadCommands(uint64_t newVMAddress, uint64_t leSize, uint32_t stringPoolOffset,
 												uint32_t linkEditsFileOffset, bool keepSignatures)
 {
 	// set LINKEDIT segment commmand to new merged LINKEDIT
@@ -1976,11 +1976,11 @@ void LinkEditOptimizer<A>::updateLoadCommands(uint64_t newVMAddress, uint64_t le
 				const MachOLayoutAbstraction::Segment* layoutSeg = fLayout.getSegment(seg->segname());
 				if ( layoutSeg != NULL ) {
 					//if ( seg->filesize() != layoutSeg->fileSize() ) {
-					//	fprintf(stderr, "LC filesize=0x%08llX, trimmed seg file size=0x%08llX, seg=%s, path=%s\n", 
+					//	fprintf(stderr, "LC filesize=0x%08llX, trimmed seg file size=0x%08llX, seg=%s, path=%s\n",
 					//					seg->filesize(), layoutSeg->fileSize(), seg->segname(), fLayout.getFilePath());
 					//}
 					//if ( seg->vmsize() != layoutSeg->size() ) {
-					//	fprintf(stderr, "LC   vmsize=0x%08llX, trimmed seg      size=0x%08llX, seg=%s, path=%s\n", 
+					//	fprintf(stderr, "LC   vmsize=0x%08llX, trimmed seg      size=0x%08llX, seg=%s, path=%s\n",
 					//					seg->vmsize(), layoutSeg->size(), seg->segname(), fLayout.getFilePath());
 					//}
 					seg->set_vmsize(layoutSeg->size());
@@ -1998,8 +1998,8 @@ void LinkEditOptimizer<A>::updateLoadCommands(uint64_t newVMAddress, uint64_t le
 			}
 		}
 		cmd = (const macho_load_command<P>*)(((uint8_t*)cmd)+cmd->cmdsize());
-	}	
-	
+	}
+
 	// update dyld_info with new offsets
 	if ( fDyldInfo != NULL ) {
 		fDyldInfo->set_rebase_off(0);
@@ -2012,14 +2012,14 @@ void LinkEditOptimizer<A>::updateLoadCommands(uint64_t newVMAddress, uint64_t le
 		fDyldInfo->set_lazy_bind_size(fLazyBindInfoSizeInNewLinkEdit);
 		fDyldInfo->set_export_off(linkEditsFileOffset+fExportInfoOffsetIntoNewLinkEdit);
 		fDyldInfo->set_export_size(fExportInfoSizeInNewLinkEdit);
-		
+
 //		fprintf(stderr, "dylib %s\n", fLayout.getFilePath());
 //		fprintf(stderr, "  bind_off=0x%08X\n", fDyldInfo->bind_off());
 //		fprintf(stderr, "  export_off=0x%08X\n", fDyldInfo->export_off());
 //		fprintf(stderr, "  export_size=%d\n", fDyldInfo->export_size());
-		
-	}	
-	
+
+	}
+
 	// update symbol table and dynamic symbol table with new offsets
 	fSymbolTableLoadCommand->set_symoff(linkEditsFileOffset+fSymbolTableStartOffsetInNewLinkEdit);
 	fSymbolTableLoadCommand->set_nsyms(fLocalSymbolsCountInNewLinkEdit+fExportedSymbolsCountInNewLinkEdit+fImportedSymbolsCountInNewLinkEdit);
@@ -2048,12 +2048,12 @@ void LinkEditOptimizer<A>::updateLoadCommands(uint64_t newVMAddress, uint64_t le
 	if ( fDataInCode != NULL ) {
 		fDataInCode->set_dataoff(linkEditsFileOffset+fDataInCodeOffsetInNewLinkEdit);
 	}
-	
+
 	// now remove load commands no longer needed
 	const macho_load_command<P>* srcCmd = cmds;
 	macho_load_command<P>* dstCmd = (macho_load_command<P>*)cmds;
 	int32_t newCount = 0;
-	for (uint32_t i = 0; i < cmd_count; ++i) {	
+	for (uint32_t i = 0; i < cmd_count; ++i) {
 		uint32_t cmdSize = srcCmd->cmdsize();
 		switch ( srcCmd->cmd() ) {
 			case LC_SEGMENT_SPLIT_INFO:
@@ -2075,12 +2075,12 @@ void LinkEditOptimizer<A>::updateLoadCommands(uint64_t newVMAddress, uint64_t le
 	}
 	// zero out stuff removed
 	bzero(dstCmd, (uint8_t*)srcCmd - (uint8_t*)dstCmd);
-	
+
 	// update mach_header
-	macho_header<P>* writableHeader = (macho_header<P>*)fHeader; 
+	macho_header<P>* writableHeader = (macho_header<P>*)fHeader;
 	writableHeader->set_ncmds(newCount);
 	writableHeader->set_sizeofcmds((uint8_t*)dstCmd - ((uint8_t*)fHeader + sizeof(macho_header<P>)));
-	
+
 	// this invalidates some ivars
 	fDynamicSymbolTable = NULL;
 	fSymbolTableLoadCommand = NULL;
@@ -2097,10 +2097,10 @@ uint8_t* SharedCache<A>::optimizeLINKEDIT(bool keepSignatures, bool dontMapLocal
 	// allocate space for optimized LINKEDIT area
 	uint8_t* newLinkEdit = new uint8_t[fLinkEditsTotalUnoptimizedSize];
 	bzero(newLinkEdit, fLinkEditsTotalUnoptimizedSize);
-	
-	// make a string pool 
+
+	// make a string pool
 	StringPool stringPool;
-	
+
 	// create optimizer object for each LINKEDIT segment
 	std::vector<LinkEditOptimizer<A>*> optimizers;
 	for(typename std::vector<LayoutInfo>::const_iterator it = fDylibs.begin(); it != fDylibs.end(); ++it) {
@@ -2108,14 +2108,14 @@ uint8_t* SharedCache<A>::optimizeLINKEDIT(bool keepSignatures, bool dontMapLocal
 	}
 
 	// rebase info is not copied because images in shared cache are never rebased
-	
+
 	// copy weak bind info
 	uint32_t offset = 0;
 	fOffsetOfWeakBindInfoInCombinedLinkedit = offset;
 	for(typename std::vector<LinkEditOptimizer<A>*>::iterator it = optimizers.begin(); it != optimizers.end(); ++it) {
 		(*it)->copyWeakBindInfo(offset);
 	}
-	
+
 	// copy export info
 	fOffsetOfExportInfoInCombinedLinkedit = offset;
 	for(typename std::vector<LinkEditOptimizer<A>*>::iterator it = optimizers.begin(); it != optimizers.end(); ++it) {
@@ -2127,7 +2127,7 @@ uint8_t* SharedCache<A>::optimizeLINKEDIT(bool keepSignatures, bool dontMapLocal
 	for(typename std::vector<LinkEditOptimizer<A>*>::iterator it = optimizers.begin(); it != optimizers.end(); ++it) {
 		(*it)->copyBindInfo(offset);
 	}
-	
+
 	// copy lazy bind info
 	fOffsetOfLazyBindInfoInCombinedLinkedit = offset;
 	for(typename std::vector<LinkEditOptimizer<A>*>::iterator it = optimizers.begin(); it != optimizers.end(); ++it) {
@@ -2138,7 +2138,7 @@ uint8_t* SharedCache<A>::optimizeLINKEDIT(bool keepSignatures, bool dontMapLocal
 	fOffsetOfOldSymbolTableInfoInCombinedLinkedit = offset;
 	uint32_t symbolTableOffset = offset;
 	uint32_t symbolTableIndex = 0;
-	if ( dontMapLocalSymbols ) 
+	if ( dontMapLocalSymbols )
 		fUnmappedLocalSymbols.reserve(16384);
 	for(typename std::vector<LinkEditOptimizer<A>*>::iterator it = optimizers.begin(); it != optimizers.end(); ++it) {
 		(*it)->copyLocalSymbols(symbolTableOffset, symbolTableIndex, dontMapLocalSymbols, fInMemoryCache,
@@ -2148,14 +2148,14 @@ uint8_t* SharedCache<A>::optimizeLINKEDIT(bool keepSignatures, bool dontMapLocal
 	}
 	fSizeOfOldSymbolTableInfoInCombinedLinkedit =  symbolTableIndex * sizeof(macho_nlist<typename A::P>);
 	offset = symbolTableOffset + fSizeOfOldSymbolTableInfoInCombinedLinkedit & (-8);
-	
+
 	// copy external relocations, 8-byte aligned after end of symbol table
 	fOffsetOfOldExternalRelocationsInCombinedLinkedit = offset;
 	for(typename std::vector<LinkEditOptimizer<A>*>::iterator it = optimizers.begin(); it != optimizers.end(); ++it) {
 		(*it)->copyExternalRelocations(offset);
 	}
 	fSizeOfOldExternalRelocationsInCombinedLinkedit = offset - fOffsetOfOldExternalRelocationsInCombinedLinkedit;
-	
+
 	// copy function starts
 	fOffsetOfFunctionStartsInCombinedLinkedit = offset;
 	for(typename std::vector<LinkEditOptimizer<A>*>::iterator it = optimizers.begin(); it != optimizers.end(); ++it) {
@@ -2176,18 +2176,18 @@ uint8_t* SharedCache<A>::optimizeLINKEDIT(bool keepSignatures, bool dontMapLocal
 		(*it)->copyIndirectSymbolTable(offset);
 	}
 	fSizeOfOldIndirectSymbolsInCombinedLinkedit = offset - fOffsetOfOldIndirectSymbolsInCombinedLinkedit;
-		
+
 	// copy string pool
 	fOffsetOfOldStringPoolInCombinedLinkedit = offset;
 	memcpy(&newLinkEdit[offset], stringPool.getBuffer(), stringPool.size());
 	fSizeOfOldStringPoolInCombinedLinkedit = stringPool.size();
-	
+
 	// total new size round up to page size
 	fLinkEditsTotalOptimizedSize = pageAlign(fOffsetOfOldStringPoolInCombinedLinkedit + fSizeOfOldStringPoolInCombinedLinkedit);
-	
-	// choose new linkedit file offset 
+
+	// choose new linkedit file offset
 	uint32_t linkEditsFileOffset = cacheFileOffsetForVMAddress(fLinkEditsStartAddress);
-//	uint32_t linkEditsFileOffset = fLinkEditsStartAddress - sharedRegionStartAddress();	
+//	uint32_t linkEditsFileOffset = fLinkEditsStartAddress - sharedRegionStartAddress();
 
 	// update load commands so that all dylibs shared different areas of the same LINKEDIT segment
 	for(typename std::vector<LinkEditOptimizer<A>*>::iterator it = optimizers.begin(); it != optimizers.end(); ++it) {
@@ -2199,7 +2199,7 @@ uint8_t* SharedCache<A>::optimizeLINKEDIT(bool keepSignatures, bool dontMapLocal
 
 	// overwrite mapped LINKEDIT area with new optimized LINKEDIT segment
 	memcpy(fFirstLinkEditSegment->mappedAddress(), newLinkEdit, fLinkEditsTotalUnoptimizedSize);
-	
+
 	// update all LINKEDIT Segment objects to point to same merged LINKEDIT area
 	for(typename std::vector<LayoutInfo>::iterator it = fDylibs.begin(); it != fDylibs.end(); ++it) {
 		std::vector<MachOLayoutAbstraction::Segment>& segs = ((MachOLayoutAbstraction*)(it->layout))->getSegments();
@@ -2213,8 +2213,8 @@ uint8_t* SharedCache<A>::optimizeLINKEDIT(bool keepSignatures, bool dontMapLocal
 				seg.setFileOffset(linkEditsFileOffset);
 			}
 		}
-	}	
-		
+	}
+
 	// return new end of cache
 	return (uint8_t*)fFirstLinkEditSegment->mappedAddress() + regionAlign(fLinkEditsTotalOptimizedSize);
 }
@@ -2236,17 +2236,17 @@ public:
         , fCount(0)
     { }
 
-    typename A::P::uint_t visit(typename A::P::uint_t oldValue) 
+    typename A::P::uint_t visit(typename A::P::uint_t oldValue)
     {
         fCount++;
         const char *s = (const char *)
             fCache->mappedAddressForVMAddress(oldValue);
-        objc_opt::string_map::iterator element = 
+        objc_opt::string_map::iterator element =
             fSelectorStrings.insert(objc_opt::string_map::value_type(s, oldValue)).first;
         return (typename A::P::uint_t)element->second;
     }
 
-    objc_opt::string_map& strings() { 
+    objc_opt::string_map& strings() {
         return fSelectorStrings;
     }
 
@@ -2274,9 +2274,9 @@ public:
         , fHinfos(hinfos)
     { }
 
-    void visitClass(SharedCache<A>* cache, 
+    void visitClass(SharedCache<A>* cache,
                     const macho_header<P>* header,
-                    objc_class_t<A>* cls) 
+                    objc_class_t<A>* cls)
     {
         if (cls->isMetaClass(cache)) return;
 
@@ -2289,11 +2289,11 @@ public:
         fCount++;
     }
 
-    objc_opt::string_map& classNames() { 
+    objc_opt::string_map& classNames() {
         return fClassNames;
     }
 
-    objc_opt::class_map& classes() { 
+    objc_opt::class_map& classes() {
         return fClasses;
     }
 
@@ -2332,12 +2332,12 @@ public:
         , fProtocolReferenceCount(0)
     { }
 
-    void addProtocols(SharedCache<A>* cache, 
+    void addProtocols(SharedCache<A>* cache,
                       const macho_header<P>* header)
     {
-        PointerSection<A, objc_protocol_t<A> *> 
+        PointerSection<A, objc_protocol_t<A> *>
             protocols(cache, header, "__DATA", "__objc_protolist");
-        
+
         for (pint_t i = 0; i < protocols.count(); i++) {
             objc_protocol_t<A> *proto = protocols.get(i);
 
@@ -2360,9 +2360,9 @@ public:
         }
     }
 
-    const char *writeProtocols(SharedCache<A>* cache, 
-                               uint8_t *& dest, size_t& remaining, 
-                               std::vector<void*>& pointersInData, 
+    const char *writeProtocols(SharedCache<A>* cache,
+                               uint8_t *& dest, size_t& remaining,
+                               std::vector<void*>& pointersInData,
                                pint_t protocolClassVMAddr)
     {
         if (fProtocolCount == 0) return NULL;
@@ -2399,7 +2399,7 @@ public:
                 proto->setSize(sizeof(objc_protocol_t<A>));
                 // missing extendedMethodTypes is already nil
             }
-            // Some protocol objects are big enough to have the 
+            // Some protocol objects are big enough to have the
             // demangledName field but don't initialize it.
             if (! proto->getDemangledName(cache)) {
                 proto->setDemangledName(cache, proto->getName(cache));
@@ -2412,7 +2412,7 @@ public:
             // Add new rebase entries.
             proto->addPointers(pointersInData);
         }
-        
+
         return NULL;
     }
 
@@ -2422,11 +2422,11 @@ public:
         refs.walk(cache, header);
     }
 
-    objc_opt::string_map& protocolNames() { 
+    objc_opt::string_map& protocolNames() {
         return fProtocolNames;
     }
 
-    objc_opt::protocol_map& protocols() { 
+    objc_opt::protocol_map& protocols() {
         return fProtocols;
     }
 
@@ -2468,17 +2468,17 @@ void SharedCache<A>::optimizeObjC(std::vector<void*>& pointersInData)
 			break;
 		}
 	}
-    
+
 	if ( optROSection == NULL ) {
 		warn(archName(), "libobjc's read-only section missing (metadata not optimized)");
 		return;
 	}
-	
+
 	if ( optRWSection == NULL ) {
 		warn(archName(), "libobjc's read/write section missing (metadata not optimized)");
 		return;
 	}
-	
+
 	if ( optPointerListSection == NULL ) {
 		warn(archName(), "libobjc's pointer list section missing (metadata not optimized)");
 		return;
@@ -2489,7 +2489,7 @@ void SharedCache<A>::optimizeObjC(std::vector<void*>& pointersInData)
 
 	uint8_t* optRWData = (uint8_t*)mappedAddressForVMAddress(optRWSection->addr());
     size_t optRWRemaining = optRWSection->size();
-	
+
 	if (optRORemaining < headerSize) {
 		warn(archName(), "libobjc's read-only section is too small (metadata not optimized)");
 		return;
@@ -2543,7 +2543,7 @@ void SharedCache<A>::optimizeObjC(std::vector<void*>& pointersInData)
 
     // Update selector references and build selector list
 
-    // This is SAFE: if we run out of room for the selector table, 
+    // This is SAFE: if we run out of room for the selector table,
     // the modified binaries are still usable.
 
     // Heuristic: choose selectors from libraries with more cstring data first.
@@ -2584,7 +2584,7 @@ void SharedCache<A>::optimizeObjC(std::vector<void*>& pointersInData)
 
     uint64_t clsoptVMAddr = optROSection->addr() + optROSection->size() - optRORemaining;
     objc_opt::objc_clsopt_t *clsopt = new(optROData) objc_opt::objc_clsopt_t;
-    err = clsopt->write(clsoptVMAddr, optRORemaining, 
+    err = clsopt->write(clsoptVMAddr, optRORemaining,
                         classes.classNames(), classes.classes(), verbose);
     if (err) {
         warn(archName(), err);
@@ -2620,7 +2620,7 @@ void SharedCache<A>::optimizeObjC(std::vector<void*>& pointersInData)
 	}
 
     pint_t protocolClassVMAddr = P::getP(optPointerList->protocolClass);
-    err = protocolOptimizer.writeProtocols(this, optRWData, optRWRemaining, 
+    err = protocolOptimizer.writeProtocols(this, optRWData, optRWRemaining,
                                            pointersInData, protocolClassVMAddr);
     if (err) {
         warn(archName(), err);
@@ -2629,8 +2629,8 @@ void SharedCache<A>::optimizeObjC(std::vector<void*>& pointersInData)
 
     uint64_t protocoloptVMAddr = optROSection->addr() + optROSection->size() - optRORemaining;
     objc_opt::objc_protocolopt_t *protocolopt = new(optROData) objc_opt::objc_protocolopt_t;
-    err = protocolopt->write(protocoloptVMAddr, optRORemaining, 
-                             protocolOptimizer.protocolNames(), 
+    err = protocolopt->write(protocoloptVMAddr, optRORemaining,
+                             protocolOptimizer.protocolNames(),
                              protocolOptimizer.protocols(), verbose);
     if (err) {
         warn(archName(), err);
@@ -2663,7 +2663,7 @@ void SharedCache<A>::optimizeObjC(std::vector<void*>& pointersInData)
         const macho_header<P> *mh = (const macho_header<P>*)(*it->layout).getSegments()[0].mappedAddress();
         ivarOffsetOptimizer.optimize(this, mh);
 	}
-    
+
 
     // Success. Mark dylibs as optimized.
 	for(typename std::vector<LayoutInfo>::const_iterator it = sizeSortedDylibs.begin(); it != sizeSortedDylibs.end(); ++it) {
@@ -2691,36 +2691,36 @@ void SharedCache<A>::optimizeObjC(std::vector<void*>& pointersInData)
         size_t roSize = optROSection->size() - optRORemaining;
         size_t rwSize = optRWSection->size() - optRWRemaining;
         fprintf(stderr, "update_dyld_shared_cache: for %s, %zu/%llu bytes "
-                "(%d%%) used in libobjc read-only optimization section\n", 
-                archName(), roSize, optROSection->size(), 
+                "(%d%%) used in libobjc read-only optimization section\n",
+                archName(), roSize, optROSection->size(),
                 percent(roSize, optROSection->size()));
         fprintf(stderr, "update_dyld_shared_cache: for %s, %zu/%llu bytes "
-                "(%d%%) used in libobjc read/write optimization section\n", 
-                archName(), rwSize, optRWSection->size(), 
+                "(%d%%) used in libobjc read/write optimization section\n",
+                archName(), rwSize, optRWSection->size(),
                 percent(rwSize, optRWSection->size()));
         fprintf(stderr, "update_dyld_shared_cache: for %s, "
-                "uniqued %zu selectors\n", 
+                "uniqued %zu selectors\n",
                 archName(), uniq.strings().size());
         fprintf(stderr, "update_dyld_shared_cache: for %s, "
-                "updated %zu selector references\n", 
+                "updated %zu selector references\n",
                 archName(), uniq.count());
         fprintf(stderr, "update_dyld_shared_cache: for %s, "
-                "uniqued %zu protocols\n", 
+                "uniqued %zu protocols\n",
                 archName(), protocolOptimizer.protocolCount());
         fprintf(stderr, "update_dyld_shared_cache: for %s, "
-                "updated %zu protocol references\n", 
+                "updated %zu protocol references\n",
                 archName(), protocolOptimizer.protocolReferenceCount());
         fprintf(stderr, "update_dyld_shared_cache: for %s, "
-                "updated %zu ivar offsets\n", 
+                "updated %zu ivar offsets\n",
                 archName(), ivarOffsetOptimizer.optimized());
         fprintf(stderr, "update_dyld_shared_cache: for %s, "
-                "sorted %zu method lists\n", 
+                "sorted %zu method lists\n",
                 archName(), methodSorter.optimized());
         fprintf(stderr, "update_dyld_shared_cache: for %s, "
-                "recorded %zu classes (%zu duplicates)\n", 
+                "recorded %zu classes (%zu duplicates)\n",
                 archName(), classes.classNames().size(), duplicateCount);
         fprintf(stderr, "update_dyld_shared_cache: for %s, "
-                "wrote objc metadata optimization version %d\n", 
+                "wrote objc metadata optimization version %d\n",
                 archName(), objc_opt::VERSION);
     }
 
@@ -2741,7 +2741,7 @@ static void cleanup(int sig)
 }
 
 
-// <rdar://problem/10730767> update_dyld_shared_cache should use sync_volume_np() instead of sync() 
+// <rdar://problem/10730767> update_dyld_shared_cache should use sync_volume_np() instead of sync()
 static void sync_volume(const char* volumePath)
 {
 #if __MAC_OS_X_VERSION_MIN_REQUIRED >= 1080
@@ -2749,7 +2749,7 @@ static void sync_volume(const char* volumePath)
 #else
 	int full_sync = 3; // SYNC_VOLUME_FULLSYNC | SYNC_VOLUME_FULLSYNC
 	int error = 0;
-	if ( fsctl(volumePath, 0x80004101 /*FSCTL_SYNC_VOLUME*/, &full_sync, 0) == -1) 
+	if ( fsctl(volumePath, 0x80004101 /*FSCTL_SYNC_VOLUME*/, &full_sync, 0) == -1)
 		error = errno;
 #endif
 	if ( error )
@@ -2760,46 +2760,46 @@ static void sync_volume(const char* volumePath)
 // <rdar://problem/12552226> update shared cache should sign the shared cache
 static bool adhoc_codesign_share_cache(const char* path)
 {
-	CFURLRef target = ::CFURLCreateFromFileSystemRepresentation(NULL, (const UInt8 *)path, strlen(path), FALSE);
-	if ( target == NULL )
-		return false;
+	//CFURLRef target = ::CFURLCreateFromFileSystemRepresentation(NULL, (const UInt8 *)path, strlen(path), FALSE);
+	//if ( target == NULL )
+		//return false;
 
-	SecStaticCodeRef code;
-	OSStatus status = ::SecStaticCodeCreateWithPath(target, kSecCSDefaultFlags, &code);
-	CFRelease(target);
-	if ( status ) {
-		::fprintf(stderr, "codesign: failed to create url to signed object\n");
-		return false;
-	}
+	//SecStaticCodeRef code;
+	//OSStatus status = ::SecStaticCodeCreateWithPath(target, kSecCSDefaultFlags, &code);
+	//CFRelease(target);
+	//if ( status ) {
+		//::fprintf(stderr, "codesign: failed to create url to signed object\n");
+		//return false;
+	//}
 
-	const void * keys[1] = { (void *)kSecCodeSignerIdentity } ;
-	const void * values[1] = { (void *)kCFNull };
-	CFDictionaryRef params = ::CFDictionaryCreate(NULL, keys, values, 1, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
-	if ( params == NULL ) {
-		CFRelease(code);
-		return false;
-	}
-	
-	SecCodeSignerRef signer;
-	status = ::SecCodeSignerCreate(params, kSecCSDefaultFlags, &signer);
-	CFRelease(params);
-	if ( status ) {
-		CFRelease(code);
-		::fprintf(stderr, "codesign: failed to create signer object\n");
-		return false;
-	}
+	//const void * keys[1] = { (void *)kSecCodeSignerIdentity } ;
+	//const void * values[1] = { (void *)kCFNull };
+	//CFDictionaryRef params = ::CFDictionaryCreate(NULL, keys, values, 1, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+	//if ( params == NULL ) {
+		//CFRelease(code);
+		//return false;
+	//}
 
-	status = ::SecCodeSignerAddSignatureWithErrors(signer, code, kSecCSDefaultFlags, NULL);
-	CFRelease(code);
-	CFRelease(signer);
-	if ( status ) {
-		::fprintf(stderr, "codesign: failed to sign object: %s\n", path);
-		return false;
-	}
+	//SecCodeSignerRef signer;
+	//status = ::SecCodeSignerCreate(params, kSecCSDefaultFlags, &signer);
+	//CFRelease(params);
+	//if ( status ) {
+		//CFRelease(code);
+		//::fprintf(stderr, "codesign: failed to create signer object\n");
+		//return false;
+	//}
 
-	if ( verbose )
-		::fprintf(stderr, "codesigning complete of %s\n", path);
-	
+	//status = ::SecCodeSignerAddSignatureWithErrors(signer, code, kSecCSDefaultFlags, NULL);
+	//CFRelease(code);
+	//CFRelease(signer);
+	//if ( status ) {
+		//::fprintf(stderr, "codesign: failed to sign object: %s\n", path);
+		//return false;
+	//}
+
+	//if ( verbose )
+		//::fprintf(stderr, "codesigning complete of %s\n", path);
+
 	return true;
 }
 
@@ -2918,7 +2918,7 @@ bool SharedCache<A>::update(bool force, bool optimize, bool deleteExistingFirst,
 	sprintf(devCacheFilePath, "%s.development", fCacheFilePath);
 	sprintf(fileListFilePath, "%s.list", fCacheFilePath);
 	std::vector<const char *> paths;
-	
+
 	// already up to date?
 	if ( force || fExistingIsNotUpToDate ) {
 		if ( verbose )
@@ -2938,14 +2938,14 @@ bool SharedCache<A>::update(bool force, bool optimize, bool deleteExistingFirst,
 			uint32_t cacheFileSize = 0;
 			for(std::vector<shared_file_mapping_np>::iterator it = fMappings.begin(); it != fMappings.end(); ++it) {
 				uint32_t end = it->sfm_file_offset + it->sfm_size;
-				if ( end > cacheFileSize ) 
+				if ( end > cacheFileSize )
 					cacheFileSize = end;
 			}
 			if ( vm_allocate(mach_task_self(), (vm_address_t*)(&inMemoryCache), cacheFileSize, VM_FLAGS_ANYWHERE) != KERN_SUCCESS )
 				throwf("can't vm_allocate cache of size %u", cacheFileSize);
 			allocatedCacheSize = cacheFileSize;
             fInMemoryCache = inMemoryCache;
-			
+
 			// fill in header
 			dyldCacheHeader<E>* header = (dyldCacheHeader<E>*)inMemoryCache;
 			const char* archPairName = fArchGraph->archName();
@@ -2954,9 +2954,9 @@ bool SharedCache<A>::update(bool force, bool optimize, bool deleteExistingFirst,
 			strcpy(&temp[15-strlen(archPairName)], archPairName);
 			header->set_magic(temp);
 			//header->set_architecture(arch());
-			header->set_mappingOffset(sizeof(dyldCacheHeader<E>)); 
+			header->set_mappingOffset(sizeof(dyldCacheHeader<E>));
 			header->set_mappingCount(fMappings.size());
-			header->set_imagesOffset(header->mappingOffset() + fMappings.size()*sizeof(dyldCacheFileMapping<E>));	
+			header->set_imagesOffset(header->mappingOffset() + fMappings.size()*sizeof(dyldCacheFileMapping<E>));
 			header->set_imagesCount(fDylibs.size()+fDylibAliases.size());
 			header->set_dyldBaseAddress(fDyldBaseAddress);
 			header->set_codeSignatureOffset(cacheFileSize);
@@ -2965,12 +2965,12 @@ bool SharedCache<A>::update(bool force, bool optimize, bool deleteExistingFirst,
 			header->set_slideInfoSize(0);
 			header->set_localSymbolsOffset(0);
 			header->set_localSymbolsSize(0);
-			
+
 			// fill in mappings
 			dyldCacheFileMapping<E>* mapping = (dyldCacheFileMapping<E>*)&inMemoryCache[sizeof(dyldCacheHeader<E>)];
 			for(std::vector<shared_file_mapping_np>::iterator it = fMappings.begin(); it != fMappings.end(); ++it) {
 				if ( verbose )
-					fprintf(stderr, "update_dyld_shared_cache: cache mappings: address=0x%0llX, size=0x%0llX, fileOffset=0x%0llX, prot=0x%X\n", 
+					fprintf(stderr, "update_dyld_shared_cache: cache mappings: address=0x%0llX, size=0x%0llX, fileOffset=0x%0llX, prot=0x%X\n",
 									it->sfm_address, it->sfm_size, it->sfm_file_offset, it->sfm_init_prot);
 				mapping->set_address(it->sfm_address);
 				mapping->set_size(it->sfm_size);
@@ -2979,7 +2979,7 @@ bool SharedCache<A>::update(bool force, bool optimize, bool deleteExistingFirst,
 				mapping->set_init_prot(it->sfm_init_prot);
 				++mapping;
 			}
-			
+
 			// fill in image table
 			dyldCacheImageInfo<E>* image = (dyldCacheImageInfo<E>*)mapping;
 			for(typename std::vector<LayoutInfo>::iterator it = fDylibs.begin(); it != fDylibs.end(); ++it) {
@@ -2989,7 +2989,7 @@ bool SharedCache<A>::update(bool force, bool optimize, bool deleteExistingFirst,
 				image->set_pathFileOffset(cacheFileOffsetForVMAddress(it->info.address+it->info.pathFileOffset));
 				++image;
 			}
-			
+
 			// add aliases to end of image table
 			for(typename std::vector<LayoutInfo>::iterator it = fDylibAliases.begin(); it != fDylibAliases.end(); ++it) {
 				image->set_address(it->info.address);
@@ -3000,7 +3000,7 @@ bool SharedCache<A>::update(bool force, bool optimize, bool deleteExistingFirst,
 				//fprintf(stderr, "adding alias to offset 0x%08X %s\n", it->info.pathFileOffset, it->aliases[0]);
 				++image;
 			}
-						
+
 			// copy each segment to cache buffer
 			const int dylibCount = fDylibs.size();
 			int dylibIndex = 0;
@@ -3042,7 +3042,7 @@ bool SharedCache<A>::update(bool force, bool optimize, bool deleteExistingFirst,
 								if ( readResult == -1 )
 									throwf("read failure copying dylib errno=%d for %s", errno, it->layout->getID().name);
 								else
-									throwf("read failure copying dylib. Read of %lld bytes at file offset %lld returned %ld for %s", 
+									throwf("read failure copying dylib. Read of %lld bytes at file offset %lld returned %ld for %s",
 											segmentSize, segmentSrcStartOffset, readResult, it->layout->getID().name);
 							}
 						}
@@ -3074,11 +3074,11 @@ bool SharedCache<A>::update(bool force, bool optimize, bool deleteExistingFirst,
 					//fprintf(stderr, "%s at %p to %p for %s\n", seg.name(), seg.mappedAddress(), (char*)seg.mappedAddress()+ seg.size(), it->layout->getID().name);
 				}
 			}
-	
+
 			// also construct list of all pointers in cache to other things in cache
 			std::vector<void*> pointersInData;
 			pointersInData.reserve(1024);
-			
+
 			// rebase each dylib in shared cache
 			for(typename std::vector<LayoutInfo>::const_iterator it = fDylibs.begin(); it != fDylibs.end(); ++it) {
 				try {
@@ -3094,7 +3094,7 @@ bool SharedCache<A>::update(bool force, bool optimize, bool deleteExistingFirst,
 					throwf("%s in %s", msg, it->layout->getID().name);
 				}
 			}
-			
+
 			if ( verbose )
 				fprintf(stderr, "update_dyld_shared_cache: for %s, updating binding information for %lu files:\n", archName(), fDylibs.size());
 			// instantiate a Binder for each image and add to map
@@ -3177,7 +3177,7 @@ bool SharedCache<A>::update(bool force, bool optimize, bool deleteExistingFirst,
 			for(typename std::vector<Binder<A>*>::iterator it = binders.begin(); it != binders.end(); ++it) {
 				delete *it;
 			}
-	
+
 			// merge/optimize all LINKEDIT segments
 			if ( optimize ) {
 				if ( verbose )
@@ -3193,7 +3193,7 @@ bool SharedCache<A>::update(bool force, bool optimize, bool deleteExistingFirst,
 				// update fMappings so .map file will print correctly
 				fMappings.back().sfm_size = cacheFileSize-fMappings.back().sfm_file_offset;
 				// update header
-				//fprintf(stderr, "update_dyld_shared_cache: changing end of cache address from 0x%08llX to 0x%08llX\n", 
+				//fprintf(stderr, "update_dyld_shared_cache: changing end of cache address from 0x%08llX to 0x%08llX\n",
 				//		header->codeSignatureOffset(), fMappings.back().sfm_address + fMappings.back().sfm_size);
 				header->set_codeSignatureOffset(fMappings.back().sfm_file_offset + fMappings.back().sfm_size);
 			}
@@ -3255,7 +3255,7 @@ bool SharedCache<A>::update(bool force, bool optimize, bool deleteExistingFirst,
 				slideInfo->set_entries_offset((slideInfo->toc_offset()+2*toc_count+127)&(-128));
 				slideInfo->set_entries_count(0);
 				slideInfo->set_entries_size(entry_size);
-				// append each unique entry 
+				// append each unique entry
 				const dyldCacheSlideInfoEntry* bitmapAsEntries = (dyldCacheSlideInfoEntry*)bitmap;
 				dyldCacheSlideInfoEntry* const entriesInSlidInfo = (dyldCacheSlideInfoEntry*)((char*)slideInfo+slideInfo->entries_offset());
 				int entry_count = 0;
@@ -3269,7 +3269,7 @@ bool SharedCache<A>::update(bool force, bool optimize, bool deleteExistingFirst,
 							slideInfo->set_toc(i, j);
 							found = true;
 							break;
-						}	
+						}
 					}
 					if ( ! found ) {
 						// append to end
@@ -3278,28 +3278,28 @@ bool SharedCache<A>::update(bool force, bool optimize, bool deleteExistingFirst,
 					}
 				}
 				slideInfo->set_entries_count(entry_count);
-	
+
 				int slideInfoPageSize = regionAlign(slideInfo->entries_offset() + entry_count*entry_size);
 				cacheFileSize += slideInfoPageSize;
-			
+
 				// update mappings to increase RO size
 				dyldCacheHeader<E>* cacheHeader = (dyldCacheHeader<E>*)inMemoryCache;
 				dyldCacheFileMapping<E>* mappings = (dyldCacheFileMapping<E>*)&inMemoryCache[sizeof(dyldCacheHeader<E>)];
 				dyldCacheFileMapping<E>* lastMapping = &mappings[cacheHeader->mappingCount()-1];
 				lastMapping->set_size(lastMapping->size()+slideInfoPageSize);
-				
+
 				// update header to show location of slidePointers
 				cacheHeader->set_slideInfoOffset(cacheHeader->codeSignatureOffset());
 				cacheHeader->set_slideInfoSize(slideInfoPageSize);
 				cacheHeader->set_codeSignatureOffset(cacheHeader->codeSignatureOffset()+slideInfoPageSize);
-				
+
 				// update fMappings so .map file will print correctly
 				fMappings.back().sfm_size = cacheFileSize-fMappings.back().sfm_file_offset;
-				
+
 				// copy compressed into into buffer
-				memcpy(&inMemoryCache[cacheHeader->slideInfoOffset()], slideInfo, slideInfoPageSize);	
+				memcpy(&inMemoryCache[cacheHeader->slideInfoOffset()], slideInfo, slideInfoPageSize);
 			}
-			
+
 			// append local symbol info in an unmapped region
 			if ( dontMapLocalSymbols ) {
 				uint32_t spaceAtEnd = allocatedCacheSize - cacheFileSize;
@@ -3311,7 +3311,7 @@ bool SharedCache<A>::update(bool force, bool optimize, bool deleteExistingFirst,
 				const uint32_t nlistCount = fUnmappedLocalSymbols.size();
 				const uint32_t stringsOffset = nlistOffset + nlistCount * sizeof(macho_nlist<P>);
 				const uint32_t stringsSize = fUnmappedLocalsStringPool.size();
-				if ( stringsOffset+stringsSize > spaceAtEnd ) 
+				if ( stringsOffset+stringsSize > spaceAtEnd )
 					throwf("update_dyld_shared_cache[%u] for arch=%s, out of space for local symbols. Have 0x%X, Need 0x%X\n",
 							getpid(), fArchGraph->archName(), spaceAtEnd, stringsOffset+stringsSize);
 				// fill in local symbols info
@@ -3332,18 +3332,18 @@ bool SharedCache<A>::update(bool force, bool optimize, bool deleteExistingFirst,
 				memcpy(&inMemoryCache[localSymbolsOffset+nlistOffset], &fUnmappedLocalSymbols[0], nlistCount*sizeof(macho_nlist<P>));
 				// copy string pool
 				memcpy(&inMemoryCache[localSymbolsOffset+stringsOffset], fUnmappedLocalsStringPool.getBuffer(), stringsSize);
-				
+
 				// update state
 				fUnmappedLocalSymbolsSize = pageAlign(stringsOffset + stringsSize);
 				cacheFileSize = regionAlign(localSymbolsOffset + fUnmappedLocalSymbolsSize);
-				
+
 				// update header to show location of slidePointers
 				dyldCacheHeader<E>* cacheHeader = (dyldCacheHeader<E>*)inMemoryCache;
 				cacheHeader->set_localSymbolsOffset(localSymbolsOffset);
 				cacheHeader->set_localSymbolsSize(stringsOffset+stringsSize);
 				cacheHeader->set_codeSignatureOffset(cacheFileSize);
 			}
-			
+
 			// make sure after all optimizations, that whole cache file fits into shared region address range
 			{
 				dyldCacheHeader<E>* cacheHeader = (dyldCacheHeader<E>*)inMemoryCache;
@@ -3358,7 +3358,7 @@ bool SharedCache<A>::update(bool force, bool optimize, bool deleteExistingFirst,
 					}
 				}
 			}
-			
+
 			if ( fVerify ) {
 				// if no existing cache, say so
 				if ( fExistingCacheForVerification == NULL ) {
@@ -3376,7 +3376,7 @@ bool SharedCache<A>::update(bool force, bool optimize, bool deleteExistingFirst,
 				const dyldCacheFileMapping<E>* oldMappings = (dyldCacheFileMapping<E>*)&fExistingCacheForVerification[oldHeader->mappingOffset()];
 				for (int i=0; i < newHeader->mappingCount(); ++i) {
 					if ( newMappings[i].address() != oldMappings[i].address() ) {
-						throwf("update_dyld_shared_cache[%u] for arch=%s, could not verify cache because mapping %d starts at a different address 0x%0llX vs 0x%0llX\n", 
+						throwf("update_dyld_shared_cache[%u] for arch=%s, could not verify cache because mapping %d starts at a different address 0x%0llX vs 0x%0llX\n",
 							getpid(), archName(), i, newMappings[i].address(), oldMappings[i].address() );
 					}
 					if ( newMappings[i].size() != oldMappings[i].size() ) {
@@ -3384,7 +3384,7 @@ bool SharedCache<A>::update(bool force, bool optimize, bool deleteExistingFirst,
 						 getpid(), archName(), i);
 					}
 				}
-				
+
 				//fprintf(stderr, "%s existing cache = %p\n", archName(), fExistingCacheForVerification);
 				//fprintf(stderr, "%s new cache = %p\n", archName(), inMemoryCache);
 				// compare content to existing cache page by page
@@ -3397,7 +3397,7 @@ bool SharedCache<A>::update(bool force, bool optimize, bool deleteExistingFirst,
 								const MachOLayoutAbstraction::Segment& seg = *sit;
 								if ( (seg.mappedAddress() <= &inMemoryCache[offset]) && (&inMemoryCache[offset] < ((uint8_t*)seg.mappedAddress() + seg.fileSize())) ) {
 									// all LINKEDITs point to the same region, so just print one
-									if ( strcmp(seg.name(), "__LINKEDIT") == 0 ) 
+									if ( strcmp(seg.name(), "__LINKEDIT") == 0 )
 										fprintf(stderr, "  in merged LINKEDIT segment\n");
 									else
 										fprintf(stderr, "  in segment %s of dylib %s\n", seg.name(), it->layout->getID().name);
@@ -3431,7 +3431,7 @@ bool SharedCache<A>::update(bool force, bool optimize, bool deleteExistingFirst,
 				sprintf(mapFilePath, "%s.map", fCacheFilePath);
 				char tempMapFilePath[strlen(fCacheFilePath)+32];
 				sprintf(tempMapFilePath, "%s.map%u", fCacheFilePath, getpid());
-				FILE* fmap = ::fopen(tempMapFilePath, "w");	
+				FILE* fmap = ::fopen(tempMapFilePath, "w");
 				if ( fmap == NULL ) {
 					fprintf(stderr, "can't create map file %s, errno=%d", tempMapFilePath, errno);
 				}
@@ -3452,59 +3452,59 @@ bool SharedCache<A>::update(bool force, bool optimize, bool deleteExistingFirst,
 																it->sfm_address, it->sfm_address+it->sfm_size);
 					}
 
-					fprintf(fmap, " linkedit   %4uKB 0x%0llX -> 0x%0llX weak binding info\n",		
+					fprintf(fmap, " linkedit   %4uKB 0x%0llX -> 0x%0llX weak binding info\n",
 								(fOffsetOfExportInfoInCombinedLinkedit-fOffsetOfWeakBindInfoInCombinedLinkedit)/1024,
 								fLinkEditsStartAddress+fOffsetOfWeakBindInfoInCombinedLinkedit,
 								fLinkEditsStartAddress+fOffsetOfExportInfoInCombinedLinkedit);
-					fprintf(fmap, " linkedit   %4uKB 0x%0llX -> 0x%0llX export info\n",		
+					fprintf(fmap, " linkedit   %4uKB 0x%0llX -> 0x%0llX export info\n",
 								(fOffsetOfBindInfoInCombinedLinkedit-fOffsetOfExportInfoInCombinedLinkedit)/1024,
 								fLinkEditsStartAddress+fOffsetOfExportInfoInCombinedLinkedit,
 								fLinkEditsStartAddress+fOffsetOfBindInfoInCombinedLinkedit);
-					fprintf(fmap, " linkedit   %4uKB 0x%0llX -> 0x%0llX binding info\n",		
+					fprintf(fmap, " linkedit   %4uKB 0x%0llX -> 0x%0llX binding info\n",
 								(fOffsetOfLazyBindInfoInCombinedLinkedit-fOffsetOfBindInfoInCombinedLinkedit)/1024,
 								fLinkEditsStartAddress+fOffsetOfBindInfoInCombinedLinkedit,
 								fLinkEditsStartAddress+fOffsetOfLazyBindInfoInCombinedLinkedit);
-					fprintf(fmap, " linkedit   %4uKB 0x%0llX -> 0x%0llX lazy binding info\n",		
+					fprintf(fmap, " linkedit   %4uKB 0x%0llX -> 0x%0llX lazy binding info\n",
 								(fOffsetOfOldSymbolTableInfoInCombinedLinkedit-fOffsetOfLazyBindInfoInCombinedLinkedit)/1024,
 								fLinkEditsStartAddress+fOffsetOfLazyBindInfoInCombinedLinkedit,
 								fLinkEditsStartAddress+fOffsetOfOldSymbolTableInfoInCombinedLinkedit);
-					fprintf(fmap, " linkedit   %4uMB 0x%0llX -> 0x%0llX non-dyld symbol table size\n",		
+					fprintf(fmap, " linkedit   %4uMB 0x%0llX -> 0x%0llX non-dyld symbol table size\n",
 								(fSizeOfOldSymbolTableInfoInCombinedLinkedit)/(1024*1024),
 								fLinkEditsStartAddress+fOffsetOfOldSymbolTableInfoInCombinedLinkedit,
-								fLinkEditsStartAddress+fOffsetOfOldSymbolTableInfoInCombinedLinkedit+fSizeOfOldSymbolTableInfoInCombinedLinkedit);				
+								fLinkEditsStartAddress+fOffsetOfOldSymbolTableInfoInCombinedLinkedit+fSizeOfOldSymbolTableInfoInCombinedLinkedit);
 					if ( fSizeOfFunctionStartsInCombinedLinkedit != 0 )
-						fprintf(fmap, " linkedit   %4uKB 0x%0llX -> 0x%0llX non-dyld functions starts size\n",		
+						fprintf(fmap, " linkedit   %4uKB 0x%0llX -> 0x%0llX non-dyld functions starts size\n",
 								fSizeOfFunctionStartsInCombinedLinkedit/1024,
 								fLinkEditsStartAddress+fOffsetOfFunctionStartsInCombinedLinkedit,
-								fLinkEditsStartAddress+fOffsetOfFunctionStartsInCombinedLinkedit+fSizeOfFunctionStartsInCombinedLinkedit);				
+								fLinkEditsStartAddress+fOffsetOfFunctionStartsInCombinedLinkedit+fSizeOfFunctionStartsInCombinedLinkedit);
 					if ( fSizeOfDataInCodeInCombinedLinkedit != 0 )
-						fprintf(fmap, " linkedit   %4uKB 0x%0llX -> 0x%0llX non-dyld data-in-code info size\n",		
+						fprintf(fmap, " linkedit   %4uKB 0x%0llX -> 0x%0llX non-dyld data-in-code info size\n",
 								fSizeOfDataInCodeInCombinedLinkedit/1024,
 								fLinkEditsStartAddress+fOffsetOfDataInCodeInCombinedLinkedit,
-								fLinkEditsStartAddress+fOffsetOfDataInCodeInCombinedLinkedit+fSizeOfDataInCodeInCombinedLinkedit);				
+								fLinkEditsStartAddress+fOffsetOfDataInCodeInCombinedLinkedit+fSizeOfDataInCodeInCombinedLinkedit);
 					if ( fSizeOfOldExternalRelocationsInCombinedLinkedit != 0 )
-						fprintf(fmap, " linkedit   %4uKB 0x%0llX -> 0x%0llX non-dyld external relocs size\n",		
+						fprintf(fmap, " linkedit   %4uKB 0x%0llX -> 0x%0llX non-dyld external relocs size\n",
 								fSizeOfOldExternalRelocationsInCombinedLinkedit/1024,
 								fLinkEditsStartAddress+fOffsetOfOldExternalRelocationsInCombinedLinkedit,
-								fLinkEditsStartAddress+fOffsetOfOldExternalRelocationsInCombinedLinkedit+fSizeOfOldExternalRelocationsInCombinedLinkedit);				
-					fprintf(fmap, " linkedit   %4uKB 0x%0llX -> 0x%0llX non-dyld indirect symbol table size\n",		
+								fLinkEditsStartAddress+fOffsetOfOldExternalRelocationsInCombinedLinkedit+fSizeOfOldExternalRelocationsInCombinedLinkedit);
+					fprintf(fmap, " linkedit   %4uKB 0x%0llX -> 0x%0llX non-dyld indirect symbol table size\n",
 								fSizeOfOldIndirectSymbolsInCombinedLinkedit/1024,
 								fLinkEditsStartAddress+fOffsetOfOldIndirectSymbolsInCombinedLinkedit,
-								fLinkEditsStartAddress+fOffsetOfOldIndirectSymbolsInCombinedLinkedit+fSizeOfOldIndirectSymbolsInCombinedLinkedit);				
-					fprintf(fmap, " linkedit   %4uMB 0x%0llX -> 0x%0llX non-dyld string pool\n",		
+								fLinkEditsStartAddress+fOffsetOfOldIndirectSymbolsInCombinedLinkedit+fSizeOfOldIndirectSymbolsInCombinedLinkedit);
+					fprintf(fmap, " linkedit   %4uMB 0x%0llX -> 0x%0llX non-dyld string pool\n",
 								(fSizeOfOldStringPoolInCombinedLinkedit)/(1024*1024),
 								fLinkEditsStartAddress+fOffsetOfOldStringPoolInCombinedLinkedit,
-								fLinkEditsStartAddress+fOffsetOfOldStringPoolInCombinedLinkedit+fSizeOfOldStringPoolInCombinedLinkedit);				
-					
+								fLinkEditsStartAddress+fOffsetOfOldStringPoolInCombinedLinkedit+fSizeOfOldStringPoolInCombinedLinkedit);
+
 					dyldCacheHeader<E>* cacheHeader = (dyldCacheHeader<E>*)inMemoryCache;
 					if ( cacheHeader->slideInfoSize() != 0 ) {
-						fprintf(fmap, " linkedit   %4lluKB kernel slide info\n", (cacheHeader->slideInfoSize())/1024);				
+						fprintf(fmap, " linkedit   %4lluKB kernel slide info\n", (cacheHeader->slideInfoSize())/1024);
 					}
 
-					fprintf(fmap, "unmapped -- %4uMB local symbol info\n", fUnmappedLocalSymbolsSize/(1024*1024));					
-					
+					fprintf(fmap, "unmapped -- %4uMB local symbol info\n", fUnmappedLocalSymbolsSize/(1024*1024));
+
 					uint64_t endMappingAddr = fMappings[2].sfm_address + fMappings[2].sfm_size;
-					fprintf(fmap, "total map   %4lluMB\n", (endMappingAddr - sharedRegionStartAddress())/(1024*1024));	
+					fprintf(fmap, "total map   %4lluMB\n", (endMappingAddr - sharedRegionStartAddress())/(1024*1024));
 					if ( sharedRegionStartWritableAddress(0) == 0x7FFF70000000LL ) {
 						// x86_64 has different slide constraints
 						uint64_t freeSpace = 256*1024*1024 - fMappings[1].sfm_size;
@@ -3514,10 +3514,10 @@ bool SharedCache<A>::update(bool force, bool optimize, bool deleteExistingFirst,
 						uint64_t freeSpace = sharedRegionStartAddress() + sharedRegionSize() - endMappingAddr;
 						fprintf(fmap, "free space  %4lluMB -> %d bits of entropy for ASLR\n\n", freeSpace/(1024*1024), (int)log2(freeSpace/4096));
 					}
-					
+
 					for(typename std::vector<LayoutInfo>::const_iterator it = fDylibs.begin(); it != fDylibs.end(); ++it) {
 						fprintf(fmap, "%s\n", it->layout->getID().name);
-						for (std::vector<const char*>::const_iterator ait = it->aliases.begin(); ait != it->aliases.end(); ++ait) 
+						for (std::vector<const char*>::const_iterator ait = it->aliases.begin(); ait != it->aliases.end(); ++ait)
 							fprintf(fmap, "%s\n", *ait);
 						const std::vector<MachOLayoutAbstraction::Segment>&	segs = it->layout->getSegments();
 						for (int i=0; i < segs.size(); ++i) {
@@ -3535,7 +3535,7 @@ bool SharedCache<A>::update(bool force, bool optimize, bool deleteExistingFirst,
 					::rename(tempMapFilePath, mapFilePath);
 				}
 			}
-			
+
 			// free in memory cache
 			vm_deallocate(mach_task_self(), (vm_address_t)inMemoryCache, allocatedCacheSize);
 			inMemoryCache = NULL;
@@ -3546,7 +3546,7 @@ bool SharedCache<A>::update(bool force, bool optimize, bool deleteExistingFirst,
 		}
 		catch (...){
 			// remove in memory cache
-			if ( inMemoryCache != NULL ) 
+			if ( inMemoryCache != NULL )
 				vm_deallocate(mach_task_self(), (vm_address_t)inMemoryCache, allocatedCacheSize);
 			throw;
 		}
@@ -3558,7 +3558,7 @@ bool SharedCache<A>::update(bool force, bool optimize, bool deleteExistingFirst,
 
 //
 //	The shared cache is driven by /var/db/dyld/shared_region_roots which contains
-//	the paths used to search for dylibs that should go in the shared cache  
+//	the paths used to search for dylibs that should go in the shared cache
 //
 //	Leading and trailing white space is ignored
 //	Blank lines are ignored
@@ -3578,13 +3578,13 @@ static void parsePathsFile(const char* filePath, std::vector<const char*>& paths
 	if ( p == NULL ) {
 		fprintf(stderr, "update_dyld_shared_cache: malloc failure\n");
 		exit(1);
-	}	
+	}
 	if ( read(fd, p, stat_buf.st_size) != stat_buf.st_size ) {
 		fprintf(stderr, "update_dyld_shared_cache: can't read file: %s\n", filePath);
 		exit(1);
-	}	
+	}
 	::close(fd);
-	
+
 	// parse into paths and add to vector
 	char * const end = &p[stat_buf.st_size];
 	enum { lineStart, inSymbol, inComment } state = lineStart;
@@ -3636,7 +3636,7 @@ static void setSharedDylibs(const char* rootPath, const std::vector<const char*>
 		ArchGraph::addArchPair(*a);
 
 	// add roots to graph
-	for(std::vector<const char*>::const_iterator it = rootsPaths.begin(); it != rootsPaths.end(); ++it) 
+	for(std::vector<const char*>::const_iterator it = rootsPaths.begin(); it != rootsPaths.end(); ++it)
 		ArchGraph::addRoot(*it, onlyArchs);
 
 	// determine shared dylibs
@@ -3673,10 +3673,10 @@ static void scanForSharedDylibs(const char* rootPath, const std::vector<const ch
 				strcat(fullPath, entry->d_name);
 				if ( lstat(fullPath, &tmpStatPathsFile) == -1 ) {
 					fprintf(stderr, "update_dyld_shared_cache: can't access %s\n", fullPath);
-				} 
+				}
 				else if ( S_ISREG(tmpStatPathsFile.st_mode) ) {
 					parsePathsFile(fullPath, rootsPaths);
-				} 
+				}
 				else {
 					fprintf(stderr, "update_dyld_shared_cache: wrong file type for %s\n", fullPath);
 				}
@@ -3687,7 +3687,7 @@ static void scanForSharedDylibs(const char* rootPath, const std::vector<const ch
 		}
 	}
 	::closedir(dir);
-	
+
 	if ( rootsPaths.size() == 0 )
 		fprintf(stderr, "update_dyld_shared_cache: warning, no entries found in shared_region_roots\n");
 	setSharedDylibs(rootPath, overlayPaths, onlyArchs, rootsPaths);
@@ -3701,10 +3701,10 @@ static void setSharedDylibs(const char* rootPath, const std::vector<const char*>
 }
 
 
-// If the 10.5.0 version of update_dyld_shared_cache was killed or crashed, it 
+// If the 10.5.0 version of update_dyld_shared_cache was killed or crashed, it
 // could leave large half written cache files laying around.  The function deletes
 // those files.  To prevent the deletion of tmp files being created by another
-// copy of update_dyld_shared_cache, it only deletes the temp cache file if its 
+// copy of update_dyld_shared_cache, it only deletes the temp cache file if its
 // creation time was before the last restart of this machine.
 static void deleteOrphanTempCacheFiles()
 {
@@ -3724,7 +3724,7 @@ static void deleteOrphanTempCacheFiles()
 						int mib[2] = {CTL_KERN, KERN_BOOTTIME};
 						struct timeval boottime;
 						size_t size = sizeof(boottime);
-						if ( (sysctl(mib, 2, &boottime, &size, NULL, 0) != -1) && (boottime.tv_sec != 0) ) {	
+						if ( (sysctl(mib, 2, &boottime, &size, NULL, 0) != -1) && (boottime.tv_sec != 0) ) {
 							// make sure this file is older than the boot time of this machine
 							if ( tmpFileStatInfo.st_mtime < boottime.tv_sec ) {
 								filesToDelete.push_back(strdup(fullPath));
@@ -3744,7 +3744,7 @@ static void deleteOrphanTempCacheFiles()
 
 
 
-static bool updateSharedeCacheFile(const char* rootPath, const std::vector<const char*>& overlayPaths, const char* cacheDir, bool explicitCacheDir, const std::set<ArchPair>& onlyArchs, 
+static bool updateSharedeCacheFile(const char* rootPath, const std::vector<const char*>& overlayPaths, const char* cacheDir, bool explicitCacheDir, const std::set<ArchPair>& onlyArchs,
 									bool force, bool alphaSort, bool optimize, bool deleteExistingFirst, bool verify, bool keepSignatures, bool dontMapLocalSymbols)
 {
 	bool didUpdate = false;
@@ -3796,10 +3796,10 @@ static bool updateSharedeCacheFile(const char* rootPath, const std::vector<const
 				break;
 		}
 	}
-	
+
 	if ( !iPhoneOS )
 		deleteOrphanTempCacheFiles();
-	
+
 	return didUpdate;
 }
 
@@ -3825,7 +3825,7 @@ int main(int argc, const char* argv[])
 	bool dontMapLocalSymbols = false;
 	bool relaunchForHaswell = false;
 	const char* cacheDir = NULL;
-	
+
 	try {
 		// parse command line options
 		for(int i=1; i < argc; ++i) {
@@ -3905,7 +3905,7 @@ int main(int argc, const char* argv[])
 						onlyArchs.insert(ArchPair(CPU_TYPE_ARM, CPU_SUBTYPE_ARM_V7S));
 					else if ( strcmp(arch, "arm64") == 0 )
 						onlyArchs.insert(ArchPair(CPU_TYPE_ARM64, CPU_SUBTYPE_ARM64_ALL));
-					else 
+					else
 						throwf("unknown architecture %s", arch);
 				}
 				else if ( strcmp(arg, "-universal_boot") == 0 ) {
@@ -3923,8 +3923,8 @@ int main(int argc, const char* argv[])
 				throwf("unknown option: %s\n", arg);
 			}
 		}
-				
-		// strip tailing slashes on -root 
+
+		// strip tailing slashes on -root
 		// make it a real path so as to not make all dylibs look like symlink aliases
 		if ( rootPath[0] != '\0' ) {
 			char realRootPath[MAXPATHLEN];
@@ -3932,7 +3932,7 @@ int main(int argc, const char* argv[])
 				throwf("realpath() failed on %s\n", rootPath);
 			rootPath = strdup(realRootPath);
 		}
-		
+
 		// strip tailing slashes on -overlay
 		for (std::vector<const char*>::iterator it=overlayPaths.begin(); it != overlayPaths.end(); ++it) {
 			char realOverlayPath[MAXPATHLEN];
@@ -3942,7 +3942,7 @@ int main(int argc, const char* argv[])
 		}
 
 		// set default location to write cache dir
-		if ( cacheDir == NULL ) 
+		if ( cacheDir == NULL )
 			cacheDir = (iPhoneOS ? IPHONE_DYLD_SHARED_CACHE_DIR : MACOSX_DYLD_SHARED_CACHE_DIR);
 
 		// if no restrictions specified, use architectures that work on this machine
@@ -3976,10 +3976,10 @@ int main(int argc, const char* argv[])
 			#endif
 			}
 		}
-		
+
 		if ( !verify && (geteuid() != 0) )
 			throw "you must be root to run this tool";
-		
+
 		// build list of shared dylibs
 		if ( dylibListFile != NULL )
 			setSharedDylibs(rootPath, overlayPaths, dylibListFile, onlyArchs);
@@ -3987,14 +3987,14 @@ int main(int argc, const char* argv[])
 			scanForSharedDylibs(rootPath, overlayPaths, "/var/db/dyld/shared_region_roots/", onlyArchs);
 		bool didUpdate = updateSharedeCacheFile(rootPath, overlayPaths, cacheDir, explicitCacheDir, onlyArchs, force, alphaSort, optimize,
 								false, verify, keepSignatures, dontMapLocalSymbols);
-								
+
 		if ( didUpdate && !iPhoneOS ) {
 			void* handle = dlopen("/usr/lib/libspindump.dylib", RTLD_LAZY);
 			if ( handle != NULL ) {
 				typedef bool (*dscsym_proc_t)(const char *root);
 				dscsym_proc_t proc = (dscsym_proc_t)dlsym(handle, "dscsym_save_nuggets_for_current_caches");
 				const char* nuggetRootPath = "/";
-				if ( !overlayPaths.empty() ) 
+				if ( !overlayPaths.empty() )
 					nuggetRootPath = overlayPaths[0];
 				else if ( rootPath[0] != '\0' )
 					nuggetRootPath = rootPath;
@@ -4025,7 +4025,7 @@ int main(int argc, const char* argv[])
 		fprintf(stderr, "update_dyld_shared_cache failed: %s\n", msg);
 		return 1;
 	}
-	
+
 	return 0;
 }
 
